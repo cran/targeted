@@ -1,3 +1,12 @@
+# targeted 0.2.0
+
+- Naive Bayes classifer with `NB`
+- Pooled adjacent violator algorithm `pava`
+- ODE `ode_solve`
+- Calibration `calibration`
+- Cross-validation `cv`
+- `ace` method updated and renamed to `ate`
+
 # targeted 0.1.1
 
 - Maintenance release.

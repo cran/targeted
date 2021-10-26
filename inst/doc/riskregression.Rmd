@@ -5,18 +5,23 @@ date: "`r Sys.Date()`"
 output:
   knitr:::html_vignette:
     fig_caption: yes
+    fig_width: 7.15
+    fig_height: 5.5
+    toc: true
+    toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{riskregression}
+  %\VignetteIndexEntry{Estimating a relative risk or risk difference with a binary exposure}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
+ collapse = TRUE,
+ #dev="png",
+ comment = "#>"
 )
-library(lava)
+library("lava")
 ```
 
 Introduction
@@ -307,7 +312,7 @@ and \(\phi_{\mathrm{eff}}\) is the *influence function*.
 The influence function can be extracted using the ``iid`` method
 ```{r}
 head(iid(fit))
-````
+```
 
 SessionInfo
 ============
