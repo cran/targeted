@@ -4,7 +4,7 @@ knitr::opts_chunk$set(
  #dev="png",
  comment = "#>"
 )
-library("targeted")
+library(targeted)
 
 ## ----simulation---------------------------------------------------------------
 m <- lvm(Y ~ A+X+Z, A~X+Z, Z~X)

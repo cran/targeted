@@ -4,7 +4,7 @@ knitr::opts_chunk$set(
  #dev="png",
  comment = "#>"
 )
-library("lava")
+library(lava)
 
 ## ---- fig.width=5, fig.height=5-----------------------------------------------
   p0 <- seq(0,1,length.out=100)
