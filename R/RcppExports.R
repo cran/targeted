@@ -13,6 +13,10 @@
     .Call(`_targeted_ode_solve`, f, input, init, par)
 }
 
+.ode_solve2 <- function(f, input, init, par) {
+    .Call(`_targeted_ode_solve2`, f, input, init, par)
+}
+
 bin_logl <- function(y, a, x1, x2, par, weights, type = "rd", indiv = FALSE) {
     .Call(`_targeted_bin_logl`, y, a, x1, x2, par, weights, type, indiv)
 }
@@ -37,8 +41,8 @@ bin_esteq_c <- function(y, a, x1, x2, x3, alpha, par, weights, type = "rd") {
     .Call(`_targeted_bin_esteq_c`, y, a, x1, x2, x3, alpha, par, weights, type)
 }
 
-ace_est <- function(y, a, x1, x2, theta, weights, binary = TRUE) {
-    .Call(`_targeted_ace_est`, y, a, x1, x2, theta, weights, binary)
+ace_est <- function(y, a, x1, x2, theta, weights, offset, link = "identity") {
+    .Call(`_targeted_ace_est`, y, a, x1, x2, theta, weights, offset, link)
 }
 
 fast_iid <- function(y, p, x1, weights, logistic = TRUE) {
@@ -61,7 +65,11 @@ fast_iid <- function(y, p, x1, weights, logistic = TRUE) {
     .Call(`_targeted_pava`, y, x, weights)
 }
 
+.nondom <- function(x) {
+    .Call(`_targeted_nondom`, x)
+}
+
 # Register entry points for exported C++ functions
 methods::setLoadAction(function(ns) {
-    .Call('_targeted_RcppExport_registerCCallable', PACKAGE = 'targeted')
+    .Call(`_targeted_RcppExport_registerCCallable`)
 })

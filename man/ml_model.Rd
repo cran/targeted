@@ -15,8 +15,8 @@ Provides standardized estimation and prediction methods
 data(iris)
 rf <- function(formula, ...)
 ml_model$new(formula, info="grf::probability_forest",
-             fit=function(x,y, ...) grf::probability_forest(X=x, Y=y, ...),
-             pred=function(fit, newdata) predict(fit, newdata)$predictions, ...)
+             estimate=function(x,y, ...) grf::probability_forest(X=x, Y=y, ...),
+             predict=function(object, newdata) predict(object, newdata)$predictions, ...)
 
 args <- expand.list(num.trees=c(100,200), mtry=1:3,
                    formula=c(Species ~ ., Species ~ Sepal.Length + Sepal.Width))
@@ -30,6 +30,11 @@ predict(x, newdata=head(iris))
 a <- targeted::cv(models, data=iris)
 cbind(coef(a), attr(args, "table"))
 }
+
+ff <- ml_model$new(estimate=function(y,x) lm.fit(x=x, y=y),
+                   predict=function(object, newdata) newdata\%*\%object$coefficients)
+## tmp <- ff$estimate(y, x=x)
+## ff$predict(x)
 }
 \author{
 Klaus Kähler Holst
@@ -42,6 +47,8 @@ Klaus Kähler Holst
 \item{\code{formals}}{List with formal arguments of estimation and prediction functions}
 
 \item{\code{formula}}{Formula specifying response and design matrix}
+
+\item{\code{args}}{additional arguments specified during initialization}
 }
 \if{html}{\out{</div>}}
 }
@@ -62,6 +69,7 @@ Klaus Kähler Holst
 \item \href{#method-ml_model-print}{\code{ml_model$print()}}
 \item \href{#method-ml_model-response}{\code{ml_model$response()}}
 \item \href{#method-ml_model-design}{\code{ml_model$design()}}
+\item \href{#method-ml_model-opt}{\code{ml_model$opt()}}
 \item \href{#method-ml_model-clone}{\code{ml_model$clone()}}
 }
 }
@@ -73,9 +81,9 @@ Create a new prediction model object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{ml_model$new(
   formula = NULL,
-  fit,
-  pred = predict,
-  pred.args = NULL,
+  estimate,
+  predict = stats::predict,
+  predict.args = NULL,
   info = NULL,
   specials,
   response.arg = "y",
@@ -89,18 +97,18 @@ Create a new prediction model object
 \describe{
 \item{\code{formula}}{formula specifying outcome and design matrix}
 
-\item{\code{fit}}{function for fitting the model (must be a function response, 'y',
+\item{\code{estimate}}{function for fitting the model (must be a function response, 'y',
 and design matrix, 'x'. Alternatively, a function with a single 'formula' argument)}
 
-\item{\code{pred}}{prediction function (must be a function of model object, 'fit',
+\item{\code{predict}}{prediction function (must be a function of model object, 'object',
 and new design matrix, 'newdata')}
 
-\item{\code{pred.args}}{optional arguments to prediction function}
+\item{\code{predict.args}}{optional arguments to prediction function}
 
 \item{\code{info}}{optional description of the model}
 
 \item{\code{specials}}{optional additional terms (weights, offset, id, subset, ...)
-passed to 'fit'}
+passed to 'estimate'}
 
 \item{\code{response.arg}}{name of response argument}
 
@@ -138,7 +146,7 @@ Estimation method
 \subsection{Method \code{predict()}}{
 Prediction method
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ml_model$predict(newdata, ..., fit = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ml_model$predict(newdata, ..., object = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -148,7 +156,7 @@ Prediction method
 
 \item{\code{...}}{Additional arguments to prediction method}
 
-\item{\code{fit}}{Optional model fit object}
+\item{\code{object}}{Optional model fit object}
 }
 \if{html}{\out{</div>}}
 }
@@ -165,7 +173,7 @@ Update formula
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{formula}}{formula}
+\item{\code{formula}}{formula or character which defines the new response}
 
 \item{\code{...}}{Additional arguments to lower level functions}
 }
@@ -195,13 +203,15 @@ Print method
 \subsection{Method \code{response()}}{
 Extract response from data
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ml_model$response(data)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ml_model$response(data, ...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{data}}{data.frame}
+
+\item{\code{...}}{additional arguments to 'design'}
 }
 \if{html}{\out{</div>}}
 }
@@ -212,13 +222,34 @@ Extract response from data
 \subsection{Method \code{design()}}{
 Extract design matrix (features) from data
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{ml_model$design(data)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{ml_model$design(data, ...)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{data}}{data.frame}
+
+\item{\code{...}}{additional arguments to 'design'}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-ml_model-opt"></a>}}
+\if{latex}{\out{\hypertarget{method-ml_model-opt}{}}}
+\subsection{Method \code{opt()}}{
+Get options
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{ml_model$opt(arg, ...)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{arg}}{name of option to get value of}
+
+\item{\code{...}}{additional arguments to lower level functions}
 }
 \if{html}{\out{</div>}}
 }

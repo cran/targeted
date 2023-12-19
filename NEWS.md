@@ -1,3 +1,13 @@
+# targeted 0.4
+
+- `alean`: Assumption Lean inference for generalized linear model parameters
+- `ate` now supports general family argument
+- `cate` now supports parallelization via the future or parallel package
+- `ml_model` refactored. `ML` new wrapper for various machine learning models.
+- `cv` parallelization (future or parallel package)
+- `riskreg_cens` cumulative risk, restricted mean survival predictions (censored
+  unbiased regression estimates)
+
 # targeted 0.3
 
 - Conditional average treatment estimator `cate`, `crr`

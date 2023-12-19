@@ -89,6 +89,27 @@ namespace targeted {
         return Rcpp::as<arma::mat >(rcpp_result_gen);
     }
 
+    inline arma::mat _ode_solve2(Rcpp::Function f, arma::mat input, arma::mat init, arma::mat par) {
+        typedef SEXP(*Ptr__ode_solve2)(SEXP,SEXP,SEXP,SEXP);
+        static Ptr__ode_solve2 p__ode_solve2 = NULL;
+        if (p__ode_solve2 == NULL) {
+            validateSignature("arma::mat(*_ode_solve2)(Rcpp::Function,arma::mat,arma::mat,arma::mat)");
+            p__ode_solve2 = (Ptr__ode_solve2)R_GetCCallable("targeted", "_targeted__ode_solve2");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p__ode_solve2(Shield<SEXP>(Rcpp::wrap(f)), Shield<SEXP>(Rcpp::wrap(input)), Shield<SEXP>(Rcpp::wrap(init)), Shield<SEXP>(Rcpp::wrap(par)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::mat >(rcpp_result_gen);
+    }
+
     inline arma::vec bin_logl(const arma::vec& y, const arma::vec& a, const arma::mat& x1, const arma::mat& x2, const arma::vec par, const arma::vec& weights, std::string type = "rd", bool indiv = false) {
         typedef SEXP(*Ptr_bin_logl)(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
         static Ptr_bin_logl p_bin_logl = NULL;
@@ -215,17 +236,17 @@ namespace targeted {
         return Rcpp::as<arma::cx_mat >(rcpp_result_gen);
     }
 
-    inline Rcpp::List ace_est(const arma::vec& y, const arma::mat& a, const arma::mat& x1, const arma::mat& x2, const arma::vec& theta, const arma::vec& weights, bool binary = true) {
-        typedef SEXP(*Ptr_ace_est)(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
+    inline Rcpp::List ace_est(const arma::vec& y, const arma::mat& a, const arma::mat& x1, const arma::mat& x2, const arma::vec& theta, const arma::vec& weights, const arma::vec& offset, std::string link = "identity") {
+        typedef SEXP(*Ptr_ace_est)(SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP,SEXP);
         static Ptr_ace_est p_ace_est = NULL;
         if (p_ace_est == NULL) {
-            validateSignature("Rcpp::List(*ace_est)(const arma::vec&,const arma::mat&,const arma::mat&,const arma::mat&,const arma::vec&,const arma::vec&,bool)");
+            validateSignature("Rcpp::List(*ace_est)(const arma::vec&,const arma::mat&,const arma::mat&,const arma::mat&,const arma::vec&,const arma::vec&,const arma::vec&,std::string)");
             p_ace_est = (Ptr_ace_est)R_GetCCallable("targeted", "_targeted_ace_est");
         }
         RObject rcpp_result_gen;
         {
             RNGScope RCPP_rngScope_gen;
-            rcpp_result_gen = p_ace_est(Shield<SEXP>(Rcpp::wrap(y)), Shield<SEXP>(Rcpp::wrap(a)), Shield<SEXP>(Rcpp::wrap(x1)), Shield<SEXP>(Rcpp::wrap(x2)), Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(weights)), Shield<SEXP>(Rcpp::wrap(binary)));
+            rcpp_result_gen = p_ace_est(Shield<SEXP>(Rcpp::wrap(y)), Shield<SEXP>(Rcpp::wrap(a)), Shield<SEXP>(Rcpp::wrap(x1)), Shield<SEXP>(Rcpp::wrap(x2)), Shield<SEXP>(Rcpp::wrap(theta)), Shield<SEXP>(Rcpp::wrap(weights)), Shield<SEXP>(Rcpp::wrap(offset)), Shield<SEXP>(Rcpp::wrap(link)));
         }
         if (rcpp_result_gen.inherits("interrupted-error"))
             throw Rcpp::internal::InterruptedException();
@@ -339,6 +360,27 @@ namespace targeted {
         if (rcpp_result_gen.inherits("try-error"))
             throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
         return Rcpp::as<List >(rcpp_result_gen);
+    }
+
+    inline arma::mat _nondom(const arma::mat& x) {
+        typedef SEXP(*Ptr__nondom)(SEXP);
+        static Ptr__nondom p__nondom = NULL;
+        if (p__nondom == NULL) {
+            validateSignature("arma::mat(*_nondom)(const arma::mat&)");
+            p__nondom = (Ptr__nondom)R_GetCCallable("targeted", "_targeted__nondom");
+        }
+        RObject rcpp_result_gen;
+        {
+            RNGScope RCPP_rngScope_gen;
+            rcpp_result_gen = p__nondom(Shield<SEXP>(Rcpp::wrap(x)));
+        }
+        if (rcpp_result_gen.inherits("interrupted-error"))
+            throw Rcpp::internal::InterruptedException();
+        if (Rcpp::internal::isLongjumpSentinel(rcpp_result_gen))
+            throw Rcpp::LongjumpException(rcpp_result_gen);
+        if (rcpp_result_gen.inherits("try-error"))
+            throw Rcpp::exception(Rcpp::as<std::string>(rcpp_result_gen).c_str());
+        return Rcpp::as<arma::mat >(rcpp_result_gen);
     }
 
 }

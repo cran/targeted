@@ -5,15 +5,14 @@
 
   @brief Classes for Ordinary Differential Equation Solvers
 
-  Explicit Runge-Kutta methods
-
+  4th order Runge-Kutta
+  
 */
 
 #pragma once
 #include "utils.hpp"
 
 namespace target {
-
 
   /*!
    * Butcher Tableau Class
@@ -44,53 +43,84 @@ namespace target {
       arma::mat A;
       arma::mat B;
       arma::colvec c;
-
-
   };
 
-//
+  // RungeKutta RK4
+  const ButcherTableau ButcherTableau_RK4 = {
+    arma::mat({
+      {0, 0, 0, 0},
+      {1/2.0, 0, 0, 0},
+      {0, 1/2.0, 0, 0},
+      {0, 0, 1, 0}
+    }), // A
+    arma::mat({{1/6.0, 1/3.0, 1/3.0, 1/6.0}}),                // B
+    arma::colvec({0.0, 0.5, 0.5, 1.0})                        // c
+  };
 
+  // Dormand-Prince
+  const ButcherTableau ButcherTableau_DP = {
+    arma::mat({
+      {0, 0, 0, 0},
+      {1/2.0, 0, 0, 0},
+      {0, 1/2.0, 0, 0},
+      {0, 0, 1, 0}
+    }), // A
+    arma::mat({{1/6.0, 1/3.0, 1/3.0, 1/6.0}}),                // B
+    arma::colvec({0.0, 1/5.0, 3/10.0, 4/5.0, 8/9.0, 1, 1})                        // c
+  };
 
   // Type definition
   using odefunc = std::function<arma::mat(arma::mat input,
-    arma::mat x,
-    arma::mat theta)>;
+                                          arma::mat x,
+                                          arma::mat theta)>;
 
   arma::mat interpolate(const arma::mat &input,  // first column is time
-                        double tau,              // Time-step
-                        bool locf = false);      // Last-observation-carried forward
-                                                 // otherwise linear interpolation
+                        double tau,  // Time-step
+                        bool locf = false);  // Last-observation-carried forward
+                                             // otherwise linear interpolation
   /*!
     Abstract class for ODE Solver
   */
   class Solver {
-  protected:
-    odefunc F;
+    protected:
+      odefunc F;
+      ButcherTableau BT;
 
-  public:
-    explicit Solver(odefunc F) {
-      this->F = F;
-    }
-    virtual ~Solver() {}
+    public:
+      explicit Solver(odefunc F, const ButcherTableau& BT = ButcherTableau_RK4) {
+        this->BT = BT;
+        this->F = F;
+      }
+      ~Solver() {}
 
-    virtual arma::mat solve(const arma::mat &input,
-                            arma::mat init,
-                            arma::mat theta) = 0;
-    arma::mat solveint(const arma::mat &input,
-                       arma::mat init,
-                       arma::mat theta,
-                       double tau = 1.0e-1,
-                       bool reduce = true);
+      virtual arma::mat solve(const arma::mat &input,
+                              arma::mat init,
+                              arma::mat theta) = 0;
+      arma::mat solveint(const arma::mat &input,
+                         arma::mat init,
+                         arma::mat theta,
+                         double tau = 1.0e-1,
+                         bool reduce = true);
   };
+
 
   /*!
     Runge-Kutta solver
-   */
+  */
+  class RungeKutta : public Solver {  // Basic 4th order Runge-Kutta solver
+    public:
+      using Solver::Solver;
+
+      arma::mat solve(const arma::mat &input, arma::mat init, arma::mat theta);
+  };
+
+
   class RK4 : public Solver {  // Basic 4th order Runge-Kutta solver
     public:
       using Solver::Solver;
 
-    arma::mat solve(const arma::mat &input, arma::mat init, arma::mat theta);
-    };
+      arma::mat solve(const arma::mat &input, arma::mat init, arma::mat theta);
+  };
 
-  }  // namespace target
+
+}  // namespace target

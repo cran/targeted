@@ -1,4 +1,4 @@
-## ---- include = FALSE---------------------------------------------------------
+## ----include = FALSE----------------------------------------------------------
 knitr::opts_chunk$set(
  collapse = TRUE,
  #dev="png",
@@ -6,14 +6,14 @@ knitr::opts_chunk$set(
 )
 library(lava)
 
-## ---- fig.width=5, fig.height=5-----------------------------------------------
+## ----fig.width=5, fig.height=5------------------------------------------------
   p0 <- seq(0,1,length.out=100)
   p1 <- function(p0,op) 1/(1+(op*(1-p0)/p0)^-1)
   plot(0, type="n", xlim=c(0,1), ylim=c(0,1),
      xlab="P(Y=1|A=0)", ylab="P(Y=1|A=1)", main="Constant odds product")
   for (op in exp(seq(-6,6,by=.25))) lines(p0,p1(p0,op), col="lightblue")
 
-## ---- fig.width=5, fig.height=5, fig.caption=' '------------------------------
+## ----fig.width=5, fig.height=5, fig.caption=' '-------------------------------
   p0 <- seq(0,1,length.out=100)
   p1 <- function(p0,rr) rr*p0
   plot(0, type="n", xlim=c(0,1), ylim=c(0,1),
@@ -85,7 +85,7 @@ d2 <- sim(m2, 1e4, p=p)
 riskreg(y~a, nuisance=~x+z, data=d2, type="rd")
 
 ## -----------------------------------------------------------------------------
-head(iid(fit))
+head(IC(fit))
 
 ## -----------------------------------------------------------------------------
 sessionInfo()

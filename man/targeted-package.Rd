@@ -6,15 +6,15 @@
 \alias{targeted}
 \title{Targeted inference}
 \description{
-Methods for targeted and semiparametric inference including
-augmented inverse probability weighted estimators for missing data and
-causal inference.
+Methods for targeted and semiparametric inference.
 }
 \examples{
+\dontrun{
 example(riskreg)
 example(cate)
 example(ate)
 example(calibration)
+}
 }
 \author{
 Klaus K. Holst (Maintainer) \href{mailto:klaus@holst.it}{klaus@holst.it}
