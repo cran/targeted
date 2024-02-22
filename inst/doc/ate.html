@@ -12,7 +12,7 @@
 
 <meta name="author" content="Klaus Kähler Holst" />
 
-<meta name="date" content="2023-12-19" />
+<meta name="date" content="2024-02-22" />
 
 <title>Average Treatment Effects</title>
 
@@ -378,7 +378,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Average Treatment Effects</h1>
 <h4 class="author">Klaus Kähler Holst</h4>
-<h4 class="date">2023-12-19</h4>
+<h4 class="date">2024-02-22</h4>
 
 
 
@@ -472,9 +472,9 @@ each treatment value</p>
 expected potential outcomes which can be approximated by Monte Carlo
 integration by simulating from the model where we intervene on <span class="math inline">\(A\)</span> (i.e., break the dependence on <span class="math inline">\(X, Z\)</span>):</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">sim</span>(<span class="fu">intervention</span>(m, <span class="st">&quot;A&quot;</span>, <span class="dv">0</span>), <span class="fl">2e5</span>)<span class="sc">$</span>Y)</span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.498065</span></span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; [1] 0.50023</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">mean</span>(<span class="fu">sim</span>(<span class="fu">intervention</span>(m, <span class="st">&quot;A&quot;</span>, <span class="dv">1</span>), <span class="fl">2e5</span>)<span class="sc">$</span>Y)</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.63943</span></span></code></pre></div>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; [1] 0.637795</span></span></code></pre></div>
 <p>The IPW estimator can then be estimated</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="fu">ate</span>(Y <span class="sc">~</span> A <span class="sc">|</span> <span class="dv">1</span> <span class="sc">|</span> X<span class="sc">+</span>Z, <span class="at">data=</span>d)</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="co">#&gt;     Estimate Std.Err   2.5%  97.5%   P-value</span></span>
@@ -570,15 +570,15 @@ model for each treatment level (vs all others) in the propensity model
 <span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a><span class="co">#&gt;   a ~ x </span></span>
 <span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a><span class="co">#&gt;     Estimate Std.Err    2.5%   97.5%    P-value</span></span>
-<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; a=0  -1.5481 0.04496 -1.6362 -1.4600 7.489e-260</span></span>
-<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; a=1  -0.7838 0.04110 -0.8644 -0.7032  4.623e-81</span></span>
-<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; a=2  -0.4429 0.03629 -0.5140 -0.3718  2.925e-34</span></span>
-<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; a=3   0.7735 0.02573  0.7231  0.8240 1.364e-198</span></span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a><span class="co">#&gt; a=0  -1.5836 0.04754 -1.6767 -1.4904 2.510e-243</span></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a><span class="co">#&gt; a=1  -0.8580 0.04183 -0.9400 -0.7760  1.634e-93</span></span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#&gt; a=2  -0.3993 0.03513 -0.4681 -0.3304  6.175e-30</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a><span class="co">#&gt; a=3   0.7297 0.02693  0.6770  0.7825 1.043e-161</span></span>
 <span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a><span class="co">#&gt; Average Treatment Effect (constrast: &#39;a=1&#39; - &#39;a=0&#39;):</span></span>
 <span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a><span class="co">#&gt;     Estimate Std.Err   2.5%  97.5%   P-value</span></span>
-<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; ATE   0.7643 0.05869 0.6492 0.8793 9.085e-39</span></span></code></pre></div>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#&gt; ATE   0.7256 0.06138 0.6053 0.8459 3.069e-32</span></span></code></pre></div>
 <p>Choosing a different contrast for the association measures:</p>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">summary</span>(a2, <span class="at">contrast=</span><span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">4</span>))</span>
 <span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="co">#&gt; </span></span>
@@ -589,33 +589,33 @@ model for each treatment level (vs all others) in the propensity model
 <span id="cb14-7"><a href="#cb14-7" tabindex="-1"></a><span class="co">#&gt;   a ~ x </span></span>
 <span id="cb14-8"><a href="#cb14-8" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb14-9"><a href="#cb14-9" tabindex="-1"></a><span class="co">#&gt;     Estimate Std.Err    2.5%   97.5%    P-value</span></span>
-<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; a=0  -1.5481 0.04496 -1.6362 -1.4600 7.489e-260</span></span>
-<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; a=1  -0.7838 0.04110 -0.8644 -0.7032  4.623e-81</span></span>
-<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt; a=2  -0.4429 0.03629 -0.5140 -0.3718  2.925e-34</span></span>
-<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; a=3   0.7735 0.02573  0.7231  0.8240 1.364e-198</span></span>
+<span id="cb14-10"><a href="#cb14-10" tabindex="-1"></a><span class="co">#&gt; a=0  -1.5836 0.04754 -1.6767 -1.4904 2.510e-243</span></span>
+<span id="cb14-11"><a href="#cb14-11" tabindex="-1"></a><span class="co">#&gt; a=1  -0.8580 0.04183 -0.9400 -0.7760  1.634e-93</span></span>
+<span id="cb14-12"><a href="#cb14-12" tabindex="-1"></a><span class="co">#&gt; a=2  -0.3993 0.03513 -0.4681 -0.3304  6.175e-30</span></span>
+<span id="cb14-13"><a href="#cb14-13" tabindex="-1"></a><span class="co">#&gt; a=3   0.7297 0.02693  0.6770  0.7825 1.043e-161</span></span>
 <span id="cb14-14"><a href="#cb14-14" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb14-15"><a href="#cb14-15" tabindex="-1"></a><span class="co">#&gt; Average Treatment Effect (constrast: &#39;a=1&#39; - &#39;a=3&#39;):</span></span>
 <span id="cb14-16"><a href="#cb14-16" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb14-17"><a href="#cb14-17" tabindex="-1"></a><span class="co">#&gt;     Estimate Std.Err   2.5%  97.5%    P-value</span></span>
-<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; ATE   -1.557 0.04532 -1.646 -1.469 8.645e-259</span></span></code></pre></div>
+<span id="cb14-18"><a href="#cb14-18" tabindex="-1"></a><span class="co">#&gt; ATE   -1.588 0.04665 -1.679 -1.496 6.079e-254</span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">iid</span>(a2))</span>
 <span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="co">#&gt;             a=0           a=1           a=2           a=3</span></span>
-<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; 1  2.256696e-04  1.658600e-04  1.679052e-04  0.0002664880</span></span>
-<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; 2 -3.556587e-04 -2.872168e-04 -2.899632e-04 -0.0004296377</span></span>
-<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; 3 -1.544185e-06  1.265660e-05  1.275382e-05 -0.0002570925</span></span>
-<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; 4  2.522864e-05  3.082375e-05  3.114423e-05 -0.0002491063</span></span>
-<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; 5 -9.840318e-05 -7.174766e-05 -7.263969e-05 -0.0002041963</span></span>
-<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; 6  5.157984e-05  4.834694e-05  4.888536e-05  0.0002849911</span></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a><span class="co">#&gt; 1 -3.166428e-05 -5.457237e-06 -6.359929e-06 -6.789360e-06</span></span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a><span class="co">#&gt; 2  1.092943e-04  8.474978e-05  9.422265e-05  1.094304e-04</span></span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a><span class="co">#&gt; 3  1.301396e-04  9.795983e-05  1.089817e-04  1.052614e-04</span></span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a><span class="co">#&gt; 4 -9.113452e-05  7.659446e-05 -7.048630e-05 -8.723959e-05</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a><span class="co">#&gt; 5  1.215406e-04  9.249439e-05  1.028746e-04  1.340444e-05</span></span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a><span class="co">#&gt; 6  2.515487e-04  1.778471e-04  1.983432e-04  2.724858e-04</span></span>
 <span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a><span class="fu">estimate</span>(a2, <span class="cf">function</span>(x) x[<span class="dv">2</span>]<span class="sc">-</span>x[<span class="dv">4</span>])</span>
 <span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a><span class="co">#&gt;     Estimate Std.Err   2.5%  97.5%    P-value</span></span>
-<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; a=1   -1.557 0.04532 -1.646 -1.469 8.645e-259</span></span></code></pre></div>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a><span class="co">#&gt; a=1   -1.588 0.04665 -1.679 -1.496 6.079e-254</span></span></code></pre></div>
 </div>
 <div id="sessioninfo" class="section level1">
 <h1>SessionInfo</h1>
 <div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span>
 <span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="co">#&gt; R version 4.3.2 (2023-10-31)</span></span>
 <span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a><span class="co">#&gt; Platform: aarch64-apple-darwin22.6.0 (64-bit)</span></span>
-<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt; Running under: macOS Ventura 13.6.3</span></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#&gt; Running under: macOS Sonoma 14.3.1</span></span>
 <span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a><span class="co">#&gt; Matrix products: default</span></span>
 <span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a><span class="co">#&gt; BLAS:   /Users/kkzh/.asdf/installs/R/4.3.2/lib/R/lib/libRblas.dylib </span></span>
@@ -631,24 +631,24 @@ model for each treatment level (vs all others) in the propensity model
 <span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span></span>
 <span id="cb16-18"><a href="#cb16-18" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb16-19"><a href="#cb16-19" tabindex="-1"></a><span class="co">#&gt; other attached packages:</span></span>
-<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="co">#&gt; [1] targeted_0.4 lava_1.7.4  </span></span>
+<span id="cb16-20"><a href="#cb16-20" tabindex="-1"></a><span class="co">#&gt; [1] targeted_0.5 lava_1.7.4  </span></span>
 <span id="cb16-21"><a href="#cb16-21" tabindex="-1"></a><span class="co">#&gt; </span></span>
 <span id="cb16-22"><a href="#cb16-22" tabindex="-1"></a><span class="co">#&gt; loaded via a namespace (and not attached):</span></span>
-<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt;  [1] Matrix_1.6-3         future.apply_1.11.0  jsonlite_1.8.7      </span></span>
-<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="co">#&gt;  [4] futile.logger_1.4.3  compiler_4.3.2       Rcpp_1.0.11.6       </span></span>
+<span id="cb16-23"><a href="#cb16-23" tabindex="-1"></a><span class="co">#&gt;  [1] Matrix_1.6-5         future.apply_1.11.1  jsonlite_1.8.8      </span></span>
+<span id="cb16-24"><a href="#cb16-24" tabindex="-1"></a><span class="co">#&gt;  [4] futile.logger_1.4.3  compiler_4.3.2       Rcpp_1.0.12         </span></span>
 <span id="cb16-25"><a href="#cb16-25" tabindex="-1"></a><span class="co">#&gt;  [7] parallel_4.3.2       jquerylib_0.1.4      globals_0.16.2      </span></span>
 <span id="cb16-26"><a href="#cb16-26" tabindex="-1"></a><span class="co">#&gt; [10] splines_4.3.2        yaml_2.3.7           fastmap_1.1.1       </span></span>
 <span id="cb16-27"><a href="#cb16-27" tabindex="-1"></a><span class="co">#&gt; [13] lattice_0.22-5       R6_2.5.1             knitr_1.45          </span></span>
-<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="co">#&gt; [16] future_1.33.0        nloptr_2.0.3         bslib_0.5.1         </span></span>
-<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a><span class="co">#&gt; [19] rlang_1.1.1          cachem_1.0.8         xfun_0.41           </span></span>
-<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a><span class="co">#&gt; [22] sass_0.4.7           cli_3.6.1            formatR_1.14        </span></span>
-<span id="cb16-31"><a href="#cb16-31" tabindex="-1"></a><span class="co">#&gt; [25] futile.options_1.0.1 digest_0.6.33        grid_4.3.2          </span></span>
-<span id="cb16-32"><a href="#cb16-32" tabindex="-1"></a><span class="co">#&gt; [28] mvtnorm_1.2-3        timereg_2.0.5        evaluate_0.23       </span></span>
-<span id="cb16-33"><a href="#cb16-33" tabindex="-1"></a><span class="co">#&gt; [31] pracma_2.4.2         data.table_1.14.8    lambda.r_1.2.4      </span></span>
-<span id="cb16-34"><a href="#cb16-34" tabindex="-1"></a><span class="co">#&gt; [34] numDeriv_2016.8-1.1  listenv_0.9.0        codetools_0.2-19    </span></span>
-<span id="cb16-35"><a href="#cb16-35" tabindex="-1"></a><span class="co">#&gt; [37] survival_3.5-7       optimx_2023-10.21    parallelly_1.36.0   </span></span>
+<span id="cb16-28"><a href="#cb16-28" tabindex="-1"></a><span class="co">#&gt; [16] future_1.33.1        nloptr_2.0.3         bslib_0.5.1         </span></span>
+<span id="cb16-29"><a href="#cb16-29" tabindex="-1"></a><span class="co">#&gt; [19] rlang_1.1.3          cachem_1.0.8         xfun_0.41           </span></span>
+<span id="cb16-30"><a href="#cb16-30" tabindex="-1"></a><span class="co">#&gt; [22] sass_0.4.7           cli_3.6.2            formatR_1.14        </span></span>
+<span id="cb16-31"><a href="#cb16-31" tabindex="-1"></a><span class="co">#&gt; [25] futile.options_1.0.1 digest_0.6.34        grid_4.3.2          </span></span>
+<span id="cb16-32"><a href="#cb16-32" tabindex="-1"></a><span class="co">#&gt; [28] mvtnorm_1.2-4        timereg_2.0.5        evaluate_0.23       </span></span>
+<span id="cb16-33"><a href="#cb16-33" tabindex="-1"></a><span class="co">#&gt; [31] pracma_2.4.4         data.table_1.15.0    lambda.r_1.2.4      </span></span>
+<span id="cb16-34"><a href="#cb16-34" tabindex="-1"></a><span class="co">#&gt; [34] numDeriv_2016.8-1.1  listenv_0.9.1        codetools_0.2-19    </span></span>
+<span id="cb16-35"><a href="#cb16-35" tabindex="-1"></a><span class="co">#&gt; [37] survival_3.5-7       optimx_2023-10.21    parallelly_1.37.0   </span></span>
 <span id="cb16-36"><a href="#cb16-36" tabindex="-1"></a><span class="co">#&gt; [40] rmarkdown_2.25       tools_4.3.2          htmltools_0.5.6.1   </span></span>
-<span id="cb16-37"><a href="#cb16-37" tabindex="-1"></a><span class="co">#&gt; [43] mets_1.3.3</span></span></code></pre></div>
+<span id="cb16-37"><a href="#cb16-37" tabindex="-1"></a><span class="co">#&gt; [43] mets_1.3.4</span></span></code></pre></div>
 </div>
 
 <script type="text/javascript">
