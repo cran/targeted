@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Klaus Kähler Holst, Benedikt Sommer" />
+
+<meta name="date" content="2025-10-29" />
+
+<title>Prediction model class (learner)</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rstudio/markdown/inst/resources/prism-xcode.css" data-external="1">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/yihui/knitr/inst/misc/vignette.css" data-external="1">
+<script src="https://cdn.jsdelivr.net/combine/npm/@xiee/utils/js/code-lang.min.js,npm/@xiee/utils/js/number-captions.min.js,npm/prismjs@1.29.0/components/prism-core.min.js" data-external="1" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" data-external="1" defer></script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Prediction model class
+(<code>learner</code>)</h1>
+<h4 class="author">Klaus Kähler Holst, Benedikt Sommer</h4>
+<h4 class="date">2025-10-29</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+<li><a href="#built-in-learners" id="toc-built-in-learners">Built-in
+learners</a></li>
+<li><a href="#usage" id="toc-usage">Usage</a>
+<ul>
+<li><a href="#update-formula" id="toc-update-formula">Update
+formula</a></li>
+<li><a href="#cross-validation" id="toc-cross-validation">Cross-validation</a></li>
+</ul></li>
+<li><a href="#defining-new-learners" id="toc-defining-new-learners">Defining new learners</a>
+<ul>
+<li><a href="#fit-function-with-formula-and-data-arguments" id="toc-fit-function-with-formula-and-data-arguments">Fit function with
+formula and data arguments</a></li>
+<li><a href="#fit-function-with-x-and-y-arguments" id="toc-fit-function-with-x-and-y-arguments">Fit function with x and y
+arguments</a></li>
+<li><a href="#fit-function-with-single-data-argument" id="toc-fit-function-with-single-data-argument">Fit function with single
+data argument</a></li>
+<li><a href="#specials-in-formula" id="toc-specials-in-formula">Specials
+in formula</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>Methods for targeted and semiparametric inference rely on fitting
+nuisance models to observed data when estimating the target parameter of
+interest. The <code>{targeted}</code> package implements the <a href="https://r6.r-lib.org/">R6 reference class</a> <code>learner</code>
+to harmonize common statistical and machine learning models for the
+usage as nuisance models across the various implemented estimators.
+Commonly used models are constructed as <code>learner</code> class
+objects through the <code>learner_</code> functions. These functions are
+wrappers for statistical and machine learning models that have been
+implemented in other R packages. This is conceptually similar to
+packages such as <code>{caret}</code> and <code>{mlr3}</code>. Besides
+implementing a large number of prediction models, these packages provide
+extensive functionalities for data preprocessing, model selection and
+diagnostics, and hyper-parameter optimization. The design of the
+<code>learner</code> class and accompanied functions is much leaner, as
+our use-cases often only require a standardized interface for estimating
+models and generating predictions, instead of the full predictive
+modelling pipeline.</p>
+<p>This vignette uses the Mayo Clinic Primary Biliary Cholangitis data
+(<code>?survival::pbc</code>) to exemplify the usage of the
+<code>learner</code> class objects. Our interest lies in the prediction
+of the composite event of death or transplant before 2 years.</p>
+<pre class="r"><code>data(pbc, package=&quot;survival&quot;)
+pbc &lt;- transform(pbc, y = (time &lt; 730) * (status &gt; 0))</code></pre>
+<p>A logistic regression model with a single <code>age</code> covariate
+is defined and estimated via</p>
+<pre class="r"><code>lr &lt;- learner_glm(y ~ age, family = binomial())
+lr$estimate(pbc)</code></pre>
+<p>and predictions for the event <code>y = 1</code> (class 2
+probabilities) for new data are obtained by</p>
+<pre class="r"><code>lr$predict(newdata = data.frame(age = c(20, 40, 60, 80)))
+#&gt;          1          2          3          4 
+#&gt; 0.02578001 0.06868011 0.17047725 0.36415988</code></pre>
+<p>The remainder of this vignette is structured as follows. We first
+provide more details about the built-in learners that wrap statistical
+and machine learning models from other R packages. Once the usage of the
+returned <code>learner</code> class objects has been introduced, we
+provide details to implement new learners.</p>
+</div>
+<div id="built-in-learners" class="section level1">
+<h1>Built-in learners</h1>
+<p>The various constructors for commonly used statistical and machine
+learning models are listed as part of the <code>learner</code> class
+documentation</p>
+<pre class="r"><code>?learner # help(learner)</code></pre>
+<p>which contains all essential information for the usage of the
+<code>learner</code> class objects. With the exception of
+<code>learner_sl</code>, all constructors require a <code>formula</code>
+argument that specify the response vector and design matrix for the
+underlying model. This way the construction of a learner is separated
+from the estimation of the model, as shown in the above logistic
+regression example. A result of this design is the convenient
+specification of ensemble learners (superlearner), where individual
+learners operate on different subsets of features.</p>
+<pre class="r"><code>lr_sl &lt;- learner_sl(
+  learners = list(
+    glm1 = learner_glm(y ~ age * bili, family = &quot;binomial&quot;),
+    glm2 = learner_glm(y ~ age, family = &quot;binomial&quot;),
+    gam = learner_gam(y ~ s(age) + s(bili), family = &quot;binomial&quot;)
+  )
+)
+lr_sl$estimate(pbc, nfolds = 10)
+lr_sl
+#&gt; ────────── learner object ──────────
+#&gt; superlearner
+#&gt;  glm1
+#&gt;  glm2
+#&gt;  gam 
+#&gt; 
+#&gt; Estimate arguments: learners=&lt;list&gt;, nfolds=5, meta.learner=&lt;function&gt;, model.score=&lt;function&gt; 
+#&gt; Predict arguments:   
+#&gt; Formula: y ~ age * bili 
+#&gt; ─────────────────────────────────────
+#&gt;           score     weight
+#&gt; glm1 0.09742563 0.31631808
+#&gt; glm2 0.10687034 0.01128399
+#&gt; gam  0.09500222 0.67239793</code></pre>
+<p>Most constructors have additional arguments that impact the resulting
+model fit, ranging from the specification of a link function for
+generalized linear models to hyper hyperparameters of machine learning
+models. Arguments naturally vary between the constructors and are
+documented for each function (e.g. <code>?learner_gam</code>). The
+implemented constructors only provide arguments for the most relevant
+parameters of the underlying fit function (<code>mgcv::gam</code> in
+case of <code>learner_gam</code>). As described in the documentation,
+the ellipsis argument (<code>...</code>) can be used to pass additional
+arguments to the fit function. However, in most situations this is
+rarely required.</p>
+<p>It is often necessary to consider a range of models with different
+hyper-parameters and to facilitate this we can use the
+<code>learner_expand_grid</code> function</p>
+<pre class="r"><code>lrs &lt;- learner_expand_grid( learner_xgboost,
+                            list(formula = Sepal.Length ~ .,
+                                eta = c(0.2, 0.5, 0.3)) )
+lrs
+#&gt; $`xgboost reg:squarederror`
+#&gt; ────────── learner object ──────────
+#&gt; xgboost reg:squarederror 
+#&gt; 
+#&gt; Estimate arguments: max_depth=2, eta=0.2, nrounds=2, subsample=1, lambda=1, verbose=0, objective=reg:squarederror 
+#&gt; Predict arguments:   
+#&gt; Formula: Sepal.Length ~ . 
+#&gt; 
+#&gt; $`xgboost reg:squarederror.1`
+#&gt; ────────── learner object ──────────
+#&gt; xgboost reg:squarederror 
+#&gt; 
+#&gt; Estimate arguments: max_depth=2, eta=0.5, nrounds=2, subsample=1, lambda=1, verbose=0, objective=reg:squarederror 
+#&gt; Predict arguments:   
+#&gt; Formula: Sepal.Length ~ . 
+#&gt; 
+#&gt; $`xgboost reg:squarederror.2`
+#&gt; ────────── learner object ──────────
+#&gt; xgboost reg:squarederror 
+#&gt; 
+#&gt; Estimate arguments: max_depth=2, eta=0.3, nrounds=2, subsample=1, lambda=1, verbose=0, objective=reg:squarederror 
+#&gt; Predict arguments:   
+#&gt; Formula: Sepal.Length ~ .</code></pre>
+<p>The list of models can then serve as inputs for
+<code>predictor_sl</code> or for assessing the generalization error of
+the model across different hyper-parameters with the <code>cv</code>
+method.</p>
+</div>
+<div id="usage" class="section level1">
+<h1>Usage</h1>
+<p>The basic usage is to construct a new learner by providing the
+<code>formula</code> argument and the set of additional parameters that
+control the model fitting process and the task (binary classification in
+this example).</p>
+<pre class="r"><code>lr_xgboost &lt;- learner_xgboost(
+  formula = y ~ age + sex + bili,
+  eta = 0.3, nrounds = 5,  # hyperparameters
+  objective = &quot;binary:logistic&quot; # learning task
+)
+lr_xgboost
+#&gt; ────────── learner object ──────────
+#&gt; xgboost binary:logistic 
+#&gt; 
+#&gt; Estimate arguments: max_depth=2, eta=0.3, nrounds=5, subsample=1, lambda=1, verbose=0, objective=binary:logistic 
+#&gt; Predict arguments:   
+#&gt; Formula: y ~ age + sex + bili</code></pre>
+<p>The model is estimated via the <code>estimate</code> method</p>
+<pre class="r"><code>lr_xgboost$estimate(data = pbc)</code></pre>
+<p>The default behavior is to assign the fitted model to the learner
+object, which can be accessed via</p>
+<pre class="r"><code>class(lr_xgboost$fit)
+#&gt; [1] &quot;xgb.Booster&quot;</code></pre>
+<p>Once the model has been fitted, predictions are generated with</p>
+<pre class="r"><code>lr_xgboost$predict(head(pbc))
+#&gt; [1] 0.5164376 0.1311248 0.3392217 0.1311248 0.1655048 0.1311248</code></pre>
+<p>where the fitted model is used inside the learner object to generate
+the predictions.</p>
+<p>S3 methods are implemented for the <code>learner</code> class objects
+as an alternative to the R6 class syntax for fitting the model and
+making predictions.</p>
+<pre class="r"><code>lr &lt;- learner_glm(y ~ age, family = &quot;binomial&quot;)
+estimate(lr, pbc)
+predict(lr, head(pbc))
+#&gt;          1          2          3          4          5          6 
+#&gt; 0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201</code></pre>
+<div id="update-formula" class="section level2">
+<h2>Update formula</h2>
+<p>The estimate and predict functions of <code>learner</code> class
+objects are by design immutable. Both functions can be inspected as part
+of the return values of the summary method</p>
+<pre class="r"><code>lr_xgboost$summary()$estimate
+#&gt; function (x, y, ...) 
+#&gt; {
+#&gt;     d &lt;- xgboost::xgb.DMatrix(x, label = y)
+#&gt;     res &lt;- do.call(xgboost::xgboost, c(list(data = d), list(...)), 
+#&gt;         )
+#&gt;     return(res)
+#&gt; }
+#&gt; &lt;bytecode: 0x9c00e3508&gt;
+#&gt; &lt;environment: 0x9c0804938&gt;</code></pre>
+<p>Rare situations may arise where one wants to update the formula
+argument. This supported and implemented via the <code>update</code>
+method</p>
+<pre class="r"><code>lr_xgboost$update(y ~ age + sex)</code></pre>
+<p>The design matrix that results from by the specified formula can be
+inspected via</p>
+<pre class="r"><code>head(lr_xgboost$design(pbc)$x)
+#&gt;        age sexf
+#&gt; 1 58.76523    1
+#&gt; 2 56.44627    1
+#&gt; 3 70.07255    0
+#&gt; 4 54.74059    1
+#&gt; 5 38.10541    1
+#&gt; 6 66.25873    1</code></pre>
+<p>and the response vector via</p>
+<pre class="r"><code>head(lr_xgboost$response(pbc))
+#&gt; 1 2 3 4 5 6 
+#&gt; 1 0 0 0 0 0</code></pre>
+<p>See <code>?learner</code> for the differences between
+<code>learner$design</code> and <code>learner$response</code> and
+<code>?design</code> for more details about the construction of the
+design matrix and response vector.</p>
+</div>
+<div id="cross-validation" class="section level2">
+<h2>Cross-validation</h2>
+<p>The <code>{targeted}</code> package provides a generic implementation
+for repeated k-fold cross-validation with <code>learner</code> class
+objects. Parallelization is supported via the <code>{future}</code> and
+<code>{parallel}</code> packages (see <code>?cv</code> for more
+details).</p>
+<pre class="r"><code># future::plan(&quot;multicore&quot;)
+lrs &lt;- list(
+  glm = learner_glm(y ~ age + age, family = &quot;binomial&quot;),
+  gam = learner_gam(y ~ s(age) + s(bili), family = &quot;binomial&quot;)
+)
+ # 2 times repeated 5-fold cross-validation
+cv(lrs, data = pbc, rep = 2, nfolds = 5)
+#&gt; Call: cv.default(object = lrs, data = pbc, nfolds = 5, rep = 2)
+#&gt; 
+#&gt; 5-fold cross-validation with 2 repetitions
+#&gt; 
+#&gt;            mse       mae
+#&gt; glm 0.10736745 0.2127521
+#&gt; gam 0.09894063 0.1888139</code></pre>
+</div>
+</div>
+<div id="defining-new-learners" class="section level1">
+<h1>Defining new learners</h1>
+<p>Statistical or machine learning models for which no constructors are
+provided can be implemented with a few lines of code. In what follows we
+cover three general cases where the input to the fit function
+differs.</p>
+<div id="fit-function-with-formula-and-data-arguments" class="section level2">
+<h2>Fit function with formula and data arguments</h2>
+<p>The first general case covers fit functions which expect a formula
+and data argument. Both arguments are used then by the fitting routine
+to construct the design matrix and response vector. Statistical models
+are usually implement with such an interface, with examples including
+<code>stats::glm</code>, <code>mgcv::gam</code> and
+<code>earth::earth</code>. The <code>learner</code> R6 class supports
+these fitting routines by checking if the provided estimate function has
+a <code>formula</code> and <code>data</code> argument. If it does, then
+the <code>formula</code> and <code>data</code> argument are passed on to
+the estimate function without further modifications. This is exemplified
+in the following for <code>stats::glm</code>, where we define a new
+constructor to return a <code>learner</code> class object that fits a
+generalized model</p>
+<pre class="r"><code>new_glm &lt;- function(formula, ...) {
+  learner$new(
+    formula = formula,
+    estimate = stats::glm,
+    predict = stats::predict,
+    predict.args = list(type = &quot;response&quot;),
+    estimate.args = list(...),
+    info = &quot;new glm learner&quot; # optional
+  )
+}
+lr &lt;- new_glm(y ~ age, family = &quot;binomial&quot;)
+lr
+#&gt; ────────── learner object ──────────
+#&gt; new glm learner 
+#&gt; 
+#&gt; Estimate arguments: family=binomial 
+#&gt; Predict arguments: type=response 
+#&gt; Formula: y ~ age</code></pre>
+<p>It can be seen that the optional arguments of <code>new_glm</code>
+define the <code>estimate.args</code> of a constructed learner object.
+When estimating the model with</p>
+<pre class="r"><code>lr$estimate(pbc)</code></pre>
+<p>the parameters defined in <code>estimate.args</code> are passed on
+with the <code>formula</code> and <code>data</code> to
+<code>stats::glm</code> (i.e. the function specified via the
+<code>estimate</code> argument). Thus, the above is equivalent to</p>
+<pre class="r"><code>fit &lt;- glm(y ~ age, family = &quot;binomial&quot;, data = pbc)
+all(coef(fit) == coef(lr$fit))
+#&gt; [1] TRUE</code></pre>
+<p>The code further instructs to construct a learner object that uses
+<code>stats::predict</code> to make predictions. The learner object
+similarly passes on the <code>predict.args</code> to
+<code>stats::predict</code> for</p>
+<pre class="r"><code>lr$predict(head(pbc))
+#&gt;          1          2          3          4          5          6 
+#&gt; 0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201</code></pre>
+<p>which is equivalent to</p>
+<pre class="r"><code>predict(fit, newdata = head(pbc), type = &quot;response&quot;)
+#&gt;          1          2          3          4          5          6 
+#&gt; 0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201</code></pre>
+<p>Indeed, the documentation of <code>?learner</code> reveals that the
+predict method always requires an <code>object</code> and
+<code>newdata</code> argument. An important implementation detail is
+that the <code>learner</code> R6 class allows to overrule the defined
+<code>estimate.args</code> and <code>predict.args</code> in the method
+calls.</p>
+<pre class="r"><code>lr$estimate(pbc, family = &quot;poisson&quot;)
+lr$predict(head(pbc), type = &quot;link&quot;)
+#&gt;         1         2         3         4         5         6 
+#&gt; -1.837279 -1.939001 -1.341276 -2.013822 -2.743535 -1.508572</code></pre>
+</div>
+<div id="fit-function-with-x-and-y-arguments" class="section level2">
+<h2>Fit function with x and y arguments</h2>
+<p>Most fitting routines for machine learning models expect a design
+matrix and response vector as inputs. The R6 <code>learner</code> class
+supports these fitting functions by internally processing the
+<code>formula</code> argument via the <code>targeted::design</code>
+function. Take the example of <code>grf::probability_forest</code>,
+which expects a <code>X</code> (design matrix) and <code>Y</code>
+(response vector) as inputs.</p>
+<pre class="r"><code>new_grf &lt;- function(formula, ...) {
+  learner$new(
+    formula = formula,
+    estimate = function(x, y, ...) grf::probability_forest(X = x, Y = y, ...),
+    predict = function(object, newdata) {
+      predict(object, newdata = newdata)$predictions
+    },
+    estimate.args = list(...),
+    info = &quot;grf::probability_forest&quot;
+  )
+}
+lr &lt;- new_grf(as.factor(y) ~ age + bili, num.trees = 100)
+lr$estimate(pbc)</code></pre>
+<p>Compared to the previous case, the <code>pbc</code> data object is
+not directly passed on to the fit function.
+Instead,<code>targeted::design</code> constructs the design matrix and
+response vector from the defined <code>formula</code> argument. As shown
+previously,</p>
+<pre class="r"><code>dsgn &lt;- lr$design(pbc)</code></pre>
+<p>can be used to inspect the design object. The <code>x</code> and
+<code>y</code> attributes of the returned <code>design</code> object are
+then passed on to the fit function.</p>
+</div>
+<div id="fit-function-with-single-data-argument" class="section level2">
+<h2>Fit function with single data argument</h2>
+<p>To support ensemble/meta learners, it is also possible to construct a
+learner without providing a formula argument.</p>
+<pre class="r"><code>new_sl &lt;- function(learners, ...) {
+  learner$new(
+    info = &quot;new superlearner&quot;,
+    estimate = superlearner,
+    predict = targeted:::predict.superlearner,
+    estimate.args = c(list(learners = learners), list(...))
+  )
+}
+lrs &lt;- list(
+  glm = learner_glm(y ~ age, family = &quot;binomial&quot;),
+  gam = learner_gam(y ~ s(age), family = &quot;binomial&quot;)
+)
+lr &lt;- new_sl(lrs, nfolds = 2)
+lr$estimate(pbc)
+lr
+#&gt; ────────── learner object ──────────
+#&gt; new superlearner 
+#&gt; 
+#&gt; Estimate arguments: learners=&lt;list&gt;, nfolds=2 
+#&gt; Predict arguments:   
+#&gt; Formula: NULL 
+#&gt; ─────────────────────────────────────
+#&gt;         score    weight
+#&gt; glm 0.1081636 0.6177615
+#&gt; gam 0.1082369 0.3822385</code></pre>
+<p>In this case, all arguments provided to <code>lr$estimate</code> are
+joined together with the specified <code>estimate.args</code> and passed
+on to the defined estimate function (i.e.
+<code>superlearner</code>).</p>
+</div>
+<div id="specials-in-formula" class="section level2">
+<h2>Specials in formula</h2>
+<p>Certain learner functions allow for specifying special terms in the
+formula. For example, let’s consider an aggregated dataset that includes
+only the response variable, treatment, and sex:</p>
+<pre class="r"><code>library(&quot;data.table&quot;)
+dd &lt;- data.table(pbc)[!is.na(trt), .(.N), by=.(y,trt,sex)]
+print(dd)
+#&gt;        y   trt    sex     N
+#&gt;    &lt;int&gt; &lt;int&gt; &lt;fctr&gt; &lt;int&gt;
+#&gt; 1:     1     1      f    13
+#&gt; 2:     0     1      f   124
+#&gt; 3:     0     1      m    19
+#&gt; 4:     0     2      f   123
+#&gt; 5:     1     2      f    16
+#&gt; 6:     0     2      m    12
+#&gt; 7:     1     2      m     3
+#&gt; 8:     1     1      m     2</code></pre>
+<p>Next, we fit a Naive Bayes classifier using the <code>weights</code>
+special term to specify the frequency weights for the estimation</p>
+<pre class="r"><code>lr &lt;- learner_naivebayes(y ~ trt + sex + weights(N))
+lr$estimate(dd)
+lr$predict(dd)
+#&gt; [1] 0.09138473 0.09138473 0.12139346 0.11913520 0.11913520 0.15668515 0.15668515
+#&gt; [8] 0.12139346</code></pre>
+<p>Here <code>weights.numeric</code> is simply the identity function</p>
+<pre class="r"><code>targeted:::weights.numeric
+#&gt; function (object, ...) 
+#&gt; object
+#&gt; &lt;bytecode: 0x9c1e5d380&gt;
+#&gt; &lt;environment: namespace:targeted&gt;</code></pre>
+<p>To illustrate how to define a custom learner that utilizes special
+terms, consider the following example where we introduce a
+<code>strata</code> term. In this case, we introduce an estimation
+method that fits a linear regression model for each value of the strata
+variable, as well as a corresponding prediction method</p>
+<pre class="r"><code>est &lt;- function(formula, data, strata, ...)
+  lapply(levels(strata), \(s) lm(formula, data[which(strata==s),]))
+
+pred &lt;- function(object, newdata, strata, ...) {
+  res &lt;- numeric(length(strata))
+  for (i in seq_along(levels(strata))) {
+    idx &lt;- which(strata == levels(strata)[i])
+    res[idx] &lt;- predict(object[[i]], newdata[idx, ], ...)
+  }
+  return(res)
+}</code></pre>
+<p>The new learner is now defined by including the argument `specials =
+“strata”, which ensures that the strata variable is correctly passed to
+both the estimate and predict functions</p>
+<pre class="r"><code>lr &lt;- learner$new(y ~ sex + strata(trt),
+                  estimate=est, predict=pred, specials = &quot;strata&quot;)
+des &lt;- lr$design(head(pbc))
+des
+#&gt; ────────── design object ──────────
+#&gt; 
+#&gt; response (length: 6)     
+#&gt; 1   1
+#&gt; 2   0
+#&gt; ---  
+#&gt; 5   0
+#&gt; 6   0
+#&gt; 
+#&gt; specials
+#&gt;  - strata [factor]
+#&gt; 
+#&gt; design matrix (dim: 6, 1)
+#&gt;     sexf
+#&gt; 1   1   
+#&gt; 2   1   
+#&gt; ---     
+#&gt; 5   1   
+#&gt; 6   1
+des$strata
+#&gt;     1     2     3     4     5     6 
+#&gt; trt=1 trt=1 trt=1 trt=1 trt=2 trt=2 
+#&gt; Levels: trt=1 trt=2</code></pre>
+<pre class="r"><code>lr$estimate(pbc)
+lr
+#&gt; ────────── learner object ──────────
+#&gt; Estimate arguments:   
+#&gt; Predict arguments:   
+#&gt; Formula: y ~ sex + strata(trt) 
+#&gt; ─────────────────────────────────────
+#&gt; [[1]]
+#&gt; 
+#&gt; Call:
+#&gt; lm(formula = formula, data = data[which(strata == s), ])
+#&gt; 
+#&gt; Coefficients:
+#&gt; (Intercept)         sexf  
+#&gt;   0.0952381   -0.0003476  
+#&gt; 
+#&gt; 
+#&gt; [[2]]
+#&gt; 
+#&gt; Call:
+#&gt; lm(formula = formula, data = data[which(strata == s), ])
+#&gt; 
+#&gt; Coefficients:
+#&gt; (Intercept)         sexf  
+#&gt;     0.20000     -0.08489
+lr$predict(head(pbc))
+#&gt; [1] 0.09489051 0.09489051 0.09523810 0.09489051 0.11510791 0.11510791</code></pre>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

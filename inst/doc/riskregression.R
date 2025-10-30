@@ -24,16 +24,16 @@ library(lava)
 library(targeted)
 
 ## -----------------------------------------------------------------------------
-m <- lvm(a ~ x,
+m <- lava::lvm(a ~ x,
          lp.target ~ 1,
          lp.nuisance ~ x+z)
-m <- binomial.rr(m, response="y", exposure="a", target.model="lp.target", nuisance.model="lp.nuisance")
+m <- lava::binomial.rr(m, response="y", exposure="a", target.model="lp.target", nuisance.model="lp.nuisance")
 
 ## -----------------------------------------------------------------------------
-args(binomial.rr)
+args(lava::binomial.rr)
 
 ## -----------------------------------------------------------------------------
-args(binomial.rd)
+args(lava::binomial.rd)
 
 ## -----------------------------------------------------------------------------
 coef(m)
@@ -42,7 +42,7 @@ coef(m)
 p <- c('a'=-1, 'lp.target'=1, 'lp.nuisance'=-1, 'a~x'=2)
 
 ## -----------------------------------------------------------------------------
-d <- sim(m, 1e4, p=p, seed=1)
+d <- lava::sim(m, 1e4, p=p, seed=1)
 
 head(d)
 
@@ -78,8 +78,8 @@ fit <- riskreg(y~a, target=~x, nuisance=~x+z, data=d)
 fit
 
 ## -----------------------------------------------------------------------------
-m2 <- binomial.rd(m, response="y", exposure="a", target.model="lp.target", nuisance.model="lp.nuisance")
-d2 <- sim(m2, 1e4, p=p)
+m2 <- lava::binomial.rd(m, response="y", exposure="a", target.model="lp.target", nuisance.model="lp.nuisance")
+d2 <- lava::sim(m2, 1e4, p=p)
 
 ## -----------------------------------------------------------------------------
 riskreg(y~a, nuisance=~x+z, data=d2, type="rd")

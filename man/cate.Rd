@@ -5,40 +5,72 @@
 \title{Conditional Average Treatment Effect estimation}
 \usage{
 cate(
-  treatment,
-  response_model,
-  propensity_model,
-  contrast = c(1, 0),
+  response.model,
+  propensity.model,
+  cate.model = ~1,
+  calibration.model = NULL,
   data,
-  nfolds = 5,
-  type = "dml2",
+  contrast,
+  nfolds = 1,
+  rep = 1,
   silent = FALSE,
   stratify = FALSE,
-  mc.cores,
+  mc.cores = NULL,
+  rep.type = c("nuisance", "average"),
+  var.type = "IC",
+  second.order = TRUE,
+  response_model = deprecated,
+  cate_model = deprecated,
+  propensity_model = deprecated,
+  treatment = deprecated,
   ...
 )
 }
 \arguments{
-\item{treatment}{formula specifying treatment and variables to condition on}
+\item{response.model}{formula or learner object (formula => learner_glm)}
 
-\item{response_model}{formula or ml_model object (formula => glm)}
+\item{propensity.model}{formula or learner object (formula => learner_glm)}
 
-\item{propensity_model}{formula or ml_model object (formula => glm)}
+\item{cate.model}{formula specifying regression design for conditional
+average treatment effects}
 
-\item{contrast}{treatment contrast (default 1 vs 0)}
+\item{calibration.model}{linear calibration model. Specify covariates in
+addition to predicted potential outcomes to include in the calibration.}
 
 \item{data}{data.frame}
 
-\item{nfolds}{Number of folds}
+\item{contrast}{treatment contrast (default 1 vs 0)}
 
-\item{type}{'dml1' or 'dml2'}
+\item{nfolds}{number of folds}
 
-\item{silent}{supress all messages and progressbars}
+\item{rep}{number of replications of cross-fitting procedure}
 
-\item{stratify}{If TRUE the response_model will be stratified by treatment}
+\item{silent}{suppress all messages and progressbars}
 
-\item{mc.cores}{mc.cores Optional number of cores. parallel::mcmapply used
-instead of future}
+\item{stratify}{if TRUE the response.model will be stratified by treatment}
+
+\item{mc.cores}{(optional) number of cores. parallel::mcmapply used instead
+of future}
+
+\item{rep.type}{repeated cross-fitting applied by averaging nuisance models
+(\code{rep.type="nuisance"}) or by average estimates from each replication
+(\code{rep.type="average"}).}
+
+\item{var.type}{when equal to "IC" the asymptotic variance is derived from
+the influence function. Otherwise, based on expressions in Bannick et al.
+(2025) valid under different covariate-adaptive randomization schemes (only
+available for ATE and when \code{calibration.model} is also specified)}
+
+\item{second.order}{add seconder order term to IF to handle misspecification
+of outcome models}
+
+\item{response_model}{Deprecated. Use response.model instead.}
+
+\item{cate_model}{Deprecated. Use cate.model instead.}
+
+\item{propensity_model}{Deprecated. Use propensity.model instead.}
+
+\item{treatment}{Deprecated. Use cate.model instead.}
 
 \item{...}{additional arguments to future.apply::future_mapply}
 }
@@ -46,28 +78,56 @@ instead of future}
 cate.targeted object
 }
 \description{
-Conditional Average Treatment Effect estimation via Double Machine Learning
+Conditional Average Treatment Effect estimation with cross-fitting.
+}
+\details{
+We have observed data \eqn{(Y,A,W)} where \eqn{Y} is the response variable,
+\eqn{A} the binary treatment, and \eqn{W} covariates. We further let \eqn{V}
+be a subset of the covariates. Define the conditional potential mean outcome
+\deqn{\psi_{a}(P)(V) = E_{P}[E_{P}(Y\mid A=a, W)|V]} and let \eqn{m(V;
+\beta)} denote a parametric working model, then the target parameter is the
+mean-squared error \deqn{\beta(P) = \operatorname{argmin}_{\beta}
+E_{P}[\{\Psi_{1}(P)(V)-\Psi_{0}(P)(V)\} - m(V; \beta)]^{2}}
 }
 \examples{
-sim1 <- function(n=1e4,
-                 seed=NULL,
-                 return_model=FALSE, ...) {
-suppressPackageStartupMessages(require("lava"))
-if (!is.null(seed)) set.seed(seed)
-m <- lava::lvm()
-regression(m, ~a) <- function(z1,z2,z3,z4,z5)
-         cos(z1)+sin(z1*z2)+z3+z4+z5^2
-regression(m, ~u) <- function(a,z1,z2,z3,z4,z5)
-        (z1+z2+z3)*a + z1+z2+z3 + a
-distribution(m, ~a) <- binomial.lvm()
-if (return_model) return(m)
-lava::sim(m, n, p=par)
+sim1 <- function(n=1000, ...) {
+  w1 <- rnorm(n)
+  w2 <- rnorm(n)
+  a <- rbinom(n, 1, plogis(-1 + w1))
+  y <- cos(w1) + w2*a + 0.2*w2^2 + a + rnorm(n)
+  data.frame(y, a, w1, w2)
 }
 
-d <- sim1(200)
-e <- cate(a ~ z1+z2+z3, response=u~., data=d)
-e
+d <- sim1(5000)
+## ATE
+cate(cate.model=~1,
+     response.model=y~a*(w1+w2),
+     propensity.model=a~w1+w2,
+     data=d)
+## CATE
+cate(cate.model=~1+w2,
+     response.model=y~a*(w1+w2),
+     propensity.model=a~w1+w2,
+     data=d)
+
+\dontrun{ ## superlearner example
+mod1 <- list(
+   glm = learner_glm(y~w1+w2),
+   gam = learner_gam(y~s(w1) + s(w2))
+)
+s1 <- learner_sl(mod1, nfolds=5)
+cate(cate.model=~1,
+     response.model=s1,
+     propensity.model=learner_glm(a~w1+w2, family=binomial),
+     data=d,
+     stratify=TRUE)
+}
+
+}
+\references{
+Mark J. van der Laan (2006) Statistical Inference for Variable
+Importance, The International Journal of Biostatistics.
 }
 \author{
-Klaus Kähler Holst
+Klaus Kähler Holst, Andreas Nordland
 }

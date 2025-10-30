@@ -1,17 +1,22 @@
 Package: targeted
 Type: Package
 Title: Targeted Inference
-Version: 0.5
-Date: 2024-02-22
+Version: 0.6
+Date: 2025-10-29
 Authors@R: c(person(given = "Klaus K.",
                     family = "Holst",
                     role = c("aut", "cre"),
                     email = "klaus@holst.it"),
+             person(given = "Benedikt",
+                    family = "Sommer",
+                    role = c("aut"),
+                    email = "benediktsommer92@gmail.com"),
              person(given = "Andreas",
                     family = "Nordland",
                     role = c("aut"),
                     email = "andreasnordland@gmail.com"))
 Author: Klaus K. Holst [aut, cre],
+  Benedikt Sommer [aut],
   Andreas Nordland [aut]
 Maintainer: Klaus K. Holst <klaus@holst.it>
 Description: Various methods for targeted and semiparametric inference including
@@ -22,12 +27,16 @@ Description: Various methods for targeted and semiparametric inference including
 	     estimators for risk differences and relative risks (Richardson et al. (2017)
 	     <doi:10.1080/01621459.2016.1192546>), assumption lean inference for generalized
          linear model parameters (Vansteelandt et al. (2022) <doi:10.1111/rssb.12504>).
-Depends: R (>= 4.0), lava (>= 1.7.0)
-Imports: data.table, digest, futile.logger, future.apply, optimx,
-        progressr, methods, mets, R6, Rcpp (>= 1.0.0), survival
-Suggests: grf, mgcv, testthat (>= 0.11), rmarkdown, scatterplot3d,
-        SuperLearner (>= 2.0-28), knitr, xgboost, viridisLite
+Depends: R (>= 4.1)
+Imports: R6, Rcpp (>= 1.0.0), abind, cli, data.table, future.apply,
+        lava (>= 1.8.0), methods, mets, optimx, quadprog, progressr,
+        rlang, survival
+Suggests: SuperLearner (>= 2.0-28), cmprsk, MASS, e1071, earth, glmnet,
+        grf, hal9001, knitr, mgcv, nnls, polle (>= 1.5), pracma,
+        randomForestSRC, ranger, riskRegression, rmarkdown,
+        scatterplot3d, tinytest, viridisLite, xgboost
 BugReports: https://github.com/kkholst/targeted/issues
+URL: https://kkholst.github.io/targeted/
 License: Apache License (== 2.0)
 LinkingTo: Rcpp, RcppArmadillo
 LazyLoad: yes
@@ -35,8 +44,8 @@ NeedsCompilation: yes
 ByteCompile: yes
 RcppModules: riskregmodel
 Encoding: UTF-8
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.3
 VignetteBuilder: knitr
-Packaged: 2024-02-22 09:09:23 UTC; kkzh
+Packaged: 2025-10-29 22:30:56 UTC; kkzh
 Repository: CRAN
-Date/Publication: 2024-02-22 10:00:21 UTC
+Date/Publication: 2025-10-30 07:50:09 UTC
