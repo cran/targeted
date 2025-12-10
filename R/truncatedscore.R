@@ -74,6 +74,9 @@ estimate_truncatedscore <- function(
   if (inherits(mod.a, "formula")) {
     mod.a <- learner_glm(mod.a, family = binomial)
   }
+  if (inherits(data, c("data.table", "tbl_df"))) {
+    data <- as.data.frame(data)
+  }
   # Missing data model
   mod.r$estimate(data)
   r <- mod.r$response(data) == 1
@@ -220,7 +223,8 @@ summary.truncatedscore <- function(object,
       par = coef(est)[1:2],
       vcov = vcov(est)[1:2, 1:2],
       noninf = c(noninf.y, noninf.t),
-      weights = weights
+      weights = weights,
+      par.name = "b"
     ),
     list(...)
   )
@@ -232,6 +236,7 @@ summary.truncatedscore <- function(object,
     args1$vcov <- args$vcov[i, i]
     args1$noninf <- args$noninf[i]
     args1$weights <- NULL
+    args1$par.name <- paste0("b", i)
     marg_test <- c(marg_test, list(do.call(test_intersection_sw, args1)))
   }
   res1 <- with(

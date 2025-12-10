@@ -1,24 +1,24 @@
 ## ----include = FALSE----------------------------------------------------------
-knitr::opts_chunk$set(
- collapse = TRUE,
- #dev="png",
- comment = "#>"
-)
 library("targeted")
+
 
 ## ----pbcdata------------------------------------------------------------------
 data(pbc, package="survival")
 pbc <- transform(pbc, y = (time < 730) * (status > 0))
 
+
 ## ----logistic1----------------------------------------------------------------
 lr <- learner_glm(y ~ age, family = binomial())
 lr$estimate(pbc)
 
+
 ## ----logistic2----------------------------------------------------------------
 lr$predict(newdata = data.frame(age = c(20, 40, 60, 80)))
 
+
 ## ----eval = FALSE-------------------------------------------------------------
 # ?learner # help(learner)
+
 
 ## -----------------------------------------------------------------------------
 lr_sl <- learner_sl(
@@ -31,11 +31,13 @@ lr_sl <- learner_sl(
 lr_sl$estimate(pbc, nfolds = 10)
 lr_sl
 
+
 ## ----learner_expand_grid------------------------------------------------------
 lrs <- learner_expand_grid( learner_xgboost,
                             list(formula = Sepal.Length ~ .,
                                 eta = c(0.2, 0.5, 0.3)) )
 lrs
+
 
 ## -----------------------------------------------------------------------------
 lr_xgboost <- learner_xgboost(
@@ -45,31 +47,40 @@ lr_xgboost <- learner_xgboost(
 )
 lr_xgboost
 
+
 ## -----------------------------------------------------------------------------
 lr_xgboost$estimate(data = pbc)
+
 
 ## -----------------------------------------------------------------------------
 class(lr_xgboost$fit)
 
+
 ## -----------------------------------------------------------------------------
 lr_xgboost$predict(head(pbc))
+
 
 ## -----------------------------------------------------------------------------
 lr <- learner_glm(y ~ age, family = "binomial")
 estimate(lr, pbc)
 predict(lr, head(pbc))
 
+
 ## -----------------------------------------------------------------------------
 lr_xgboost$summary()$estimate
+
 
 ## -----------------------------------------------------------------------------
 lr_xgboost$update(y ~ age + sex)
 
+
 ## -----------------------------------------------------------------------------
 head(lr_xgboost$design(pbc)$x)
 
+
 ## -----------------------------------------------------------------------------
 head(lr_xgboost$response(pbc))
+
 
 ## -----------------------------------------------------------------------------
 # future::plan("multicore")
@@ -79,6 +90,7 @@ lrs <- list(
 )
  # 2 times repeated 5-fold cross-validation
 cv(lrs, data = pbc, rep = 2, nfolds = 5)
+
 
 ## -----------------------------------------------------------------------------
 new_glm <- function(formula, ...) {
@@ -94,22 +106,28 @@ new_glm <- function(formula, ...) {
 lr <- new_glm(y ~ age, family = "binomial")
 lr
 
+
 ## -----------------------------------------------------------------------------
 lr$estimate(pbc)
+
 
 ## -----------------------------------------------------------------------------
 fit <- glm(y ~ age, family = "binomial", data = pbc)
 all(coef(fit) == coef(lr$fit))
 
+
 ## -----------------------------------------------------------------------------
 lr$predict(head(pbc))
+
 
 ## -----------------------------------------------------------------------------
 predict(fit, newdata = head(pbc), type = "response")
 
+
 ## -----------------------------------------------------------------------------
 lr$estimate(pbc, family = "poisson")
 lr$predict(head(pbc), type = "link")
+
 
 ## -----------------------------------------------------------------------------
 new_grf <- function(formula, ...) {
@@ -126,8 +144,10 @@ new_grf <- function(formula, ...) {
 lr <- new_grf(as.factor(y) ~ age + bili, num.trees = 100)
 lr$estimate(pbc)
 
+
 ## -----------------------------------------------------------------------------
 dsgn <- lr$design(pbc)
+
 
 ## -----------------------------------------------------------------------------
 new_sl <- function(learners, ...) {
@@ -146,18 +166,22 @@ lr <- new_sl(lrs, nfolds = 2)
 lr$estimate(pbc)
 lr
 
+
 ## ----naivebayes_aggregate_data------------------------------------------------
 library("data.table")
 dd <- data.table(pbc)[!is.na(trt), .(.N), by=.(y,trt,sex)]
 print(dd)
+
 
 ## ----naivevbayes--------------------------------------------------------------
 lr <- learner_naivebayes(y ~ trt + sex + weights(N))
 lr$estimate(dd)
 lr$predict(dd)
 
+
 ## -----------------------------------------------------------------------------
 targeted:::weights.numeric
+
 
 ## ----eststrata----------------------------------------------------------------
 est <- function(formula, data, strata, ...)
@@ -172,12 +196,14 @@ pred <- function(object, newdata, strata, ...) {
   return(res)
 }
 
+
 ## ----lr_strata----------------------------------------------------------------
 lr <- learner$new(y ~ sex + strata(trt),
                   estimate=est, predict=pred, specials = "strata")
 des <- lr$design(head(pbc))
 des
 des$strata
+
 
 ## ----lr_strata_est------------------------------------------------------------
 lr$estimate(pbc)

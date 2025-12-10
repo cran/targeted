@@ -1,577 +1,681 @@
 <!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
 
-<html>
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.26">
 
-<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta charset="utf-8" />
-<meta name="generator" content="pandoc" />
-<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
-
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-
-<meta name="author" content="Klaus Kähler Holst, Benedikt Sommer" />
-
-<meta name="date" content="2025-10-29" />
+<meta name="author" content="Klaus Kähler Holst, Benedikt Sommer">
+<meta name="dcterms.date" content="2025-12-09">
 
 <title>Prediction model class (learner)</title>
-
-<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
-// be compatible with the behavior of Pandoc < 2.8).
-document.addEventListener('DOMContentLoaded', function(e) {
-  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
-  var i, h, a;
-  for (i = 0; i < hs.length; i++) {
-    h = hs[i];
-    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
-    a = h.attributes;
-    while (a.length > 0) h.removeAttribute(a[0].name);
-  }
-});
-</script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rstudio/markdown/inst/resources/prism-xcode.css" data-external="1">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/yihui/knitr/inst/misc/vignette.css" data-external="1">
-<script src="https://cdn.jsdelivr.net/combine/npm/@xiee/utils/js/code-lang.min.js,npm/@xiee/utils/js/number-captions.min.js,npm/prismjs@1.29.0/components/prism-core.min.js" data-external="1" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/plugins/autoloader/prism-autoloader.min.js" data-external="1" defer></script>
-
-<style type="text/css">
+<style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
-span.underline{text-decoration: underline;}
-div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
 div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
 ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+width: 0.8em;
+margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
 
 
-
-
-
-
-
-
-
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+</style>
 </head>
 
 <body>
 
 
+<header id="title-block-header">
+<h1 class="title">Prediction model class (<code>learner</code>)</h1>
+<p class="author">Klaus Kähler Holst, Benedikt Sommer</p>
 
+<p class="date">2025-12-09</p>
+</header>
 
-<h1 class="title toc-ignore">Prediction model class
-(<code>learner</code>)</h1>
-<h4 class="author">Klaus Kähler Holst, Benedikt Sommer</h4>
-<h4 class="date">2025-10-29</h4>
-
-
-<div id="TOC">
-<ul>
-<li><a href="#introduction" id="toc-introduction">Introduction</a></li>
-<li><a href="#built-in-learners" id="toc-built-in-learners">Built-in
-learners</a></li>
-<li><a href="#usage" id="toc-usage">Usage</a>
-<ul>
-<li><a href="#update-formula" id="toc-update-formula">Update
-formula</a></li>
-<li><a href="#cross-validation" id="toc-cross-validation">Cross-validation</a></li>
-</ul></li>
-<li><a href="#defining-new-learners" id="toc-defining-new-learners">Defining new learners</a>
-<ul>
-<li><a href="#fit-function-with-formula-and-data-arguments" id="toc-fit-function-with-formula-and-data-arguments">Fit function with
-formula and data arguments</a></li>
-<li><a href="#fit-function-with-x-and-y-arguments" id="toc-fit-function-with-x-and-y-arguments">Fit function with x and y
-arguments</a></li>
-<li><a href="#fit-function-with-single-data-argument" id="toc-fit-function-with-single-data-argument">Fit function with single
-data argument</a></li>
-<li><a href="#specials-in-formula" id="toc-specials-in-formula">Specials
-in formula</a></li>
-</ul></li>
-</ul>
+<nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction">Introduction</a></li>
+  <li><a href="#built-in-learners" id="toc-built-in-learners">Built-in learners</a></li>
+  <li><a href="#usage" id="toc-usage">Usage</a>
+  <ul>
+  <li><a href="#update-formula" id="toc-update-formula">Update formula</a></li>
+  <li><a href="#cross-validation" id="toc-cross-validation">Cross-validation</a></li>
+  </ul></li>
+  <li><a href="#defining-new-learners" id="toc-defining-new-learners">Defining new learners</a>
+  <ul>
+  <li><a href="#fit-function-with-formula-and-data-arguments" id="toc-fit-function-with-formula-and-data-arguments">Fit function with formula and data arguments</a></li>
+  <li><a href="#fit-function-with-x-and-y-arguments" id="toc-fit-function-with-x-and-y-arguments">Fit function with x and y arguments</a></li>
+  <li><a href="#fit-function-with-single-data-argument" id="toc-fit-function-with-single-data-argument">Fit function with single data argument</a></li>
+  <li><a href="#specials-in-formula" id="toc-specials-in-formula">Specials in formula</a></li>
+  </ul></li>
+  </ul>
+</nav>
+<h1 id="introduction">Introduction</h1>
+<p>Methods for targeted and semiparametric inference rely on fitting nuisance models to observed data when estimating the target parameter of interest. The <code>{targeted}</code> package implements the <a href="https://r6.r-lib.org/">R6 reference class</a> <code>learner</code> to harmonize common statistical and machine learning models for the usage as nuisance models across the various implemented estimators. Commonly used models are constructed as <code>learner</code> class objects through the <code>learner_</code> functions. These functions are wrappers for statistical and machine learning models that have been implemented in other R packages. This is conceptually similar to packages such as <code>{caret}</code> and <code>{mlr3}</code>. Besides implementing a large number of prediction models, these packages provide extensive functionalities for data preprocessing, model selection and diagnostics, and hyper-parameter optimization. The design of the <code>learner</code> class and accompanied functions is much leaner, as our use-cases often only require a standardized interface for estimating models and generating predictions, instead of the full predictive modelling pipeline.</p>
+<p>This vignette uses the Mayo Clinic Primary Biliary Cholangitis data (<code>?survival::pbc</code>) to exemplify the usage of the <code>learner</code> class objects. Our interest lies in the prediction of the composite event of death or transplant before 2 years.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(pbc, <span class="at">package=</span><span class="st">&quot;survival&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pbc <span class="ot">&lt;-</span> <span class="fu">transform</span>(pbc, <span class="at">y =</span> (time <span class="sc">&lt;</span> <span class="dv">730</span>) <span class="sc">*</span> (status <span class="sc">&gt;</span> <span class="dv">0</span>))</span></code></pre></div>
 </div>
+<p>A logistic regression model with a single <code>age</code> covariate is defined and estimated via</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> <span class="fu">learner_glm</span>(y <span class="sc">~</span> age, <span class="at">family =</span> <span class="fu">binomial</span>())</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(pbc)</span></code></pre></div>
+</div>
+<p>and predictions for the event <code>y = 1</code> (class 2 probabilities) for new data are obtained by</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">predict</span>(<span class="at">newdata =</span> <span class="fu">data.frame</span>(<span class="at">age =</span> <span class="fu">c</span>(<span class="dv">20</span>, <span class="dv">40</span>, <span class="dv">60</span>, <span class="dv">80</span>)))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4 
+0.02578001 0.06868011 0.17047725 0.36415988 </code></pre>
+</div>
+</div>
+<p>The remainder of this vignette is structured as follows. We first provide more details about the built-in learners that wrap statistical and machine learning models from other R packages. Once the usage of the returned <code>learner</code> class objects has been introduced, we provide details to implement new learners.</p>
+<h1 id="built-in-learners">Built-in learners</h1>
+<p>The various constructors for commonly used statistical and machine learning models are listed as part of the <code>learner</code> class documentation</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>?learner <span class="co"># help(learner)</span></span></code></pre></div>
+</div>
+<p>which contains all essential information for the usage of the <code>learner</code> class objects. With the exception of <code>learner_sl</code>, all constructors require a <code>formula</code> argument that specify the response vector and design matrix for the underlying model. This way the construction of a learner is separated from the estimation of the model, as shown in the above logistic regression example. A result of this design is the convenient specification of ensemble learners (superlearner), where individual learners operate on different subsets of features.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>lr_sl <span class="ot">&lt;-</span> <span class="fu">learner_sl</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">learners =</span> <span class="fu">list</span>(</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">glm1 =</span> <span class="fu">learner_glm</span>(y <span class="sc">~</span> age <span class="sc">*</span> bili, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">glm2 =</span> <span class="fu">learner_glm</span>(y <span class="sc">~</span> age, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">gam =</span> <span class="fu">learner_gam</span>(y <span class="sc">~</span> <span class="fu">s</span>(age) <span class="sc">+</span> <span class="fu">s</span>(bili), <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>lr_sl<span class="sc">$</span><span class="fu">estimate</span>(pbc, <span class="at">nfolds =</span> <span class="dv">10</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>lr_sl</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>────────── learner object ──────────
+superlearner
+    glm1
+    glm2
+    gam 
 
-<div id="introduction" class="section level1">
-<h1>Introduction</h1>
-<p>Methods for targeted and semiparametric inference rely on fitting
-nuisance models to observed data when estimating the target parameter of
-interest. The <code>{targeted}</code> package implements the <a href="https://r6.r-lib.org/">R6 reference class</a> <code>learner</code>
-to harmonize common statistical and machine learning models for the
-usage as nuisance models across the various implemented estimators.
-Commonly used models are constructed as <code>learner</code> class
-objects through the <code>learner_</code> functions. These functions are
-wrappers for statistical and machine learning models that have been
-implemented in other R packages. This is conceptually similar to
-packages such as <code>{caret}</code> and <code>{mlr3}</code>. Besides
-implementing a large number of prediction models, these packages provide
-extensive functionalities for data preprocessing, model selection and
-diagnostics, and hyper-parameter optimization. The design of the
-<code>learner</code> class and accompanied functions is much leaner, as
-our use-cases often only require a standardized interface for estimating
-models and generating predictions, instead of the full predictive
-modelling pipeline.</p>
-<p>This vignette uses the Mayo Clinic Primary Biliary Cholangitis data
-(<code>?survival::pbc</code>) to exemplify the usage of the
-<code>learner</code> class objects. Our interest lies in the prediction
-of the composite event of death or transplant before 2 years.</p>
-<pre class="r"><code>data(pbc, package=&quot;survival&quot;)
-pbc &lt;- transform(pbc, y = (time &lt; 730) * (status &gt; 0))</code></pre>
-<p>A logistic regression model with a single <code>age</code> covariate
-is defined and estimated via</p>
-<pre class="r"><code>lr &lt;- learner_glm(y ~ age, family = binomial())
-lr$estimate(pbc)</code></pre>
-<p>and predictions for the event <code>y = 1</code> (class 2
-probabilities) for new data are obtained by</p>
-<pre class="r"><code>lr$predict(newdata = data.frame(age = c(20, 40, 60, 80)))
-#&gt;          1          2          3          4 
-#&gt; 0.02578001 0.06868011 0.17047725 0.36415988</code></pre>
-<p>The remainder of this vignette is structured as follows. We first
-provide more details about the built-in learners that wrap statistical
-and machine learning models from other R packages. Once the usage of the
-returned <code>learner</code> class objects has been introduced, we
-provide details to implement new learners.</p>
+Estimate arguments: learners=&lt;list&gt;, nfolds=5, meta.learner=&lt;function&gt;, model.score=&lt;function&gt; 
+Predict arguments:   
+Formula: y ~ age * bili 
+─────────────────────────────────────
+          score     weight
+glm1 0.09904905 0.12160103
+glm2 0.10740116 0.08248735
+gam  0.09654980 0.79591162</code></pre>
 </div>
-<div id="built-in-learners" class="section level1">
-<h1>Built-in learners</h1>
-<p>The various constructors for commonly used statistical and machine
-learning models are listed as part of the <code>learner</code> class
-documentation</p>
-<pre class="r"><code>?learner # help(learner)</code></pre>
-<p>which contains all essential information for the usage of the
-<code>learner</code> class objects. With the exception of
-<code>learner_sl</code>, all constructors require a <code>formula</code>
-argument that specify the response vector and design matrix for the
-underlying model. This way the construction of a learner is separated
-from the estimation of the model, as shown in the above logistic
-regression example. A result of this design is the convenient
-specification of ensemble learners (superlearner), where individual
-learners operate on different subsets of features.</p>
-<pre class="r"><code>lr_sl &lt;- learner_sl(
-  learners = list(
-    glm1 = learner_glm(y ~ age * bili, family = &quot;binomial&quot;),
-    glm2 = learner_glm(y ~ age, family = &quot;binomial&quot;),
-    gam = learner_gam(y ~ s(age) + s(bili), family = &quot;binomial&quot;)
-  )
-)
-lr_sl$estimate(pbc, nfolds = 10)
-lr_sl
-#&gt; ────────── learner object ──────────
-#&gt; superlearner
-#&gt;  glm1
-#&gt;  glm2
-#&gt;  gam 
-#&gt; 
-#&gt; Estimate arguments: learners=&lt;list&gt;, nfolds=5, meta.learner=&lt;function&gt;, model.score=&lt;function&gt; 
-#&gt; Predict arguments:   
-#&gt; Formula: y ~ age * bili 
-#&gt; ─────────────────────────────────────
-#&gt;           score     weight
-#&gt; glm1 0.09742563 0.31631808
-#&gt; glm2 0.10687034 0.01128399
-#&gt; gam  0.09500222 0.67239793</code></pre>
-<p>Most constructors have additional arguments that impact the resulting
-model fit, ranging from the specification of a link function for
-generalized linear models to hyper hyperparameters of machine learning
-models. Arguments naturally vary between the constructors and are
-documented for each function (e.g. <code>?learner_gam</code>). The
-implemented constructors only provide arguments for the most relevant
-parameters of the underlying fit function (<code>mgcv::gam</code> in
-case of <code>learner_gam</code>). As described in the documentation,
-the ellipsis argument (<code>...</code>) can be used to pass additional
-arguments to the fit function. However, in most situations this is
-rarely required.</p>
-<p>It is often necessary to consider a range of models with different
-hyper-parameters and to facilitate this we can use the
-<code>learner_expand_grid</code> function</p>
-<pre class="r"><code>lrs &lt;- learner_expand_grid( learner_xgboost,
-                            list(formula = Sepal.Length ~ .,
-                                eta = c(0.2, 0.5, 0.3)) )
-lrs
-#&gt; $`xgboost reg:squarederror`
-#&gt; ────────── learner object ──────────
-#&gt; xgboost reg:squarederror 
-#&gt; 
-#&gt; Estimate arguments: max_depth=2, eta=0.2, nrounds=2, subsample=1, lambda=1, verbose=0, objective=reg:squarederror 
-#&gt; Predict arguments:   
-#&gt; Formula: Sepal.Length ~ . 
-#&gt; 
-#&gt; $`xgboost reg:squarederror.1`
-#&gt; ────────── learner object ──────────
-#&gt; xgboost reg:squarederror 
-#&gt; 
-#&gt; Estimate arguments: max_depth=2, eta=0.5, nrounds=2, subsample=1, lambda=1, verbose=0, objective=reg:squarederror 
-#&gt; Predict arguments:   
-#&gt; Formula: Sepal.Length ~ . 
-#&gt; 
-#&gt; $`xgboost reg:squarederror.2`
-#&gt; ────────── learner object ──────────
-#&gt; xgboost reg:squarederror 
-#&gt; 
-#&gt; Estimate arguments: max_depth=2, eta=0.3, nrounds=2, subsample=1, lambda=1, verbose=0, objective=reg:squarederror 
-#&gt; Predict arguments:   
-#&gt; Formula: Sepal.Length ~ .</code></pre>
-<p>The list of models can then serve as inputs for
-<code>predictor_sl</code> or for assessing the generalization error of
-the model across different hyper-parameters with the <code>cv</code>
-method.</p>
 </div>
-<div id="usage" class="section level1">
-<h1>Usage</h1>
-<p>The basic usage is to construct a new learner by providing the
-<code>formula</code> argument and the set of additional parameters that
-control the model fitting process and the task (binary classification in
-this example).</p>
-<pre class="r"><code>lr_xgboost &lt;- learner_xgboost(
-  formula = y ~ age + sex + bili,
-  eta = 0.3, nrounds = 5,  # hyperparameters
-  objective = &quot;binary:logistic&quot; # learning task
-)
-lr_xgboost
-#&gt; ────────── learner object ──────────
-#&gt; xgboost binary:logistic 
-#&gt; 
-#&gt; Estimate arguments: max_depth=2, eta=0.3, nrounds=5, subsample=1, lambda=1, verbose=0, objective=binary:logistic 
-#&gt; Predict arguments:   
-#&gt; Formula: y ~ age + sex + bili</code></pre>
+<p>Most constructors have additional arguments that impact the resulting model fit, ranging from the specification of a link function for generalized linear models to hyper hyperparameters of machine learning models. Arguments naturally vary between the constructors and are documented for each function (e.g. <code>?learner_gam</code>). The implemented constructors only provide arguments for the most relevant parameters of the underlying fit function (<code>mgcv::gam</code> in case of <code>learner_gam</code>). As described in the documentation, the ellipsis argument (<code>...</code>) can be used to pass additional arguments to the fit function. However, in most situations this is rarely required.</p>
+<p>It is often necessary to consider a range of models with different hyper-parameters and to facilitate this we can use the <code>learner_expand_grid</code> function</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>lrs <span class="ot">&lt;-</span> <span class="fu">learner_expand_grid</span>( learner_xgboost,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">list</span>(<span class="at">formula =</span> Sepal.Length <span class="sc">~</span> .,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                                <span class="at">eta =</span> <span class="fu">c</span>(<span class="fl">0.2</span>, <span class="fl">0.5</span>, <span class="fl">0.3</span>)) )</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>lrs</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$`xgboost reg:squarederror`
+────────── learner object ──────────
+xgboost reg:squarederror 
+
+Estimate arguments: max_depth=2, learning_rate=1, nrounds=2, subsample=1, reg_lambda=1, objective=reg:squarederror, eta=0.2 
+Predict arguments:   
+Formula: Sepal.Length ~ . 
+
+$`xgboost reg:squarederror.1`
+────────── learner object ──────────
+xgboost reg:squarederror 
+
+Estimate arguments: max_depth=2, learning_rate=1, nrounds=2, subsample=1, reg_lambda=1, objective=reg:squarederror, eta=0.5 
+Predict arguments:   
+Formula: Sepal.Length ~ . 
+
+$`xgboost reg:squarederror.2`
+────────── learner object ──────────
+xgboost reg:squarederror 
+
+Estimate arguments: max_depth=2, learning_rate=1, nrounds=2, subsample=1, reg_lambda=1, objective=reg:squarederror, eta=0.3 
+Predict arguments:   
+Formula: Sepal.Length ~ . </code></pre>
+</div>
+</div>
+<p>The list of models can then serve as inputs for <code>predictor_sl</code> or for assessing the generalization error of the model across different hyper-parameters with the <code>cv</code> method.</p>
+<h1 id="usage">Usage</h1>
+<p>The basic usage is to construct a new learner by providing the <code>formula</code> argument and the set of additional parameters that control the model fitting process and the task (binary classification in this example).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>lr_xgboost <span class="ot">&lt;-</span> <span class="fu">learner_xgboost</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">formula =</span> y <span class="sc">~</span> age <span class="sc">+</span> sex <span class="sc">+</span> bili,</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">eta =</span> <span class="fl">0.3</span>, <span class="at">nrounds =</span> <span class="dv">5</span>,  <span class="co"># hyperparameters</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">objective =</span> <span class="st">&quot;binary:logistic&quot;</span> <span class="co"># learning task</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>lr_xgboost</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>────────── learner object ──────────
+xgboost binary:logistic 
+
+Estimate arguments: max_depth=2, learning_rate=1, nrounds=5, subsample=1, reg_lambda=1, objective=binary:logistic, eta=0.3 
+Predict arguments:   
+Formula: y ~ age + sex + bili </code></pre>
+</div>
+</div>
 <p>The model is estimated via the <code>estimate</code> method</p>
-<pre class="r"><code>lr_xgboost$estimate(data = pbc)</code></pre>
-<p>The default behavior is to assign the fitted model to the learner
-object, which can be accessed via</p>
-<pre class="r"><code>class(lr_xgboost$fit)
-#&gt; [1] &quot;xgb.Booster&quot;</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>lr_xgboost<span class="sc">$</span><span class="fu">estimate</span>(<span class="at">data =</span> pbc)</span></code></pre></div>
+</div>
+<p>The default behavior is to assign the fitted model to the learner object, which can be accessed via</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(lr_xgboost<span class="sc">$</span>fit)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] &quot;xgb.Booster&quot;</code></pre>
+</div>
+</div>
 <p>Once the model has been fitted, predictions are generated with</p>
-<pre class="r"><code>lr_xgboost$predict(head(pbc))
-#&gt; [1] 0.5164376 0.1311248 0.3392217 0.1311248 0.1655048 0.1311248</code></pre>
-<p>where the fitted model is used inside the learner object to generate
-the predictions.</p>
-<p>S3 methods are implemented for the <code>learner</code> class objects
-as an alternative to the R6 class syntax for fitting the model and
-making predictions.</p>
-<pre class="r"><code>lr &lt;- learner_glm(y ~ age, family = &quot;binomial&quot;)
-estimate(lr, pbc)
-predict(lr, head(pbc))
-#&gt;          1          2          3          4          5          6 
-#&gt; 0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201</code></pre>
-<div id="update-formula" class="section level2">
-<h2>Update formula</h2>
-<p>The estimate and predict functions of <code>learner</code> class
-objects are by design immutable. Both functions can be inspected as part
-of the return values of the summary method</p>
-<pre class="r"><code>lr_xgboost$summary()$estimate
-#&gt; function (x, y, ...) 
-#&gt; {
-#&gt;     d &lt;- xgboost::xgb.DMatrix(x, label = y)
-#&gt;     res &lt;- do.call(xgboost::xgboost, c(list(data = d), list(...)), 
-#&gt;         )
-#&gt;     return(res)
-#&gt; }
-#&gt; &lt;bytecode: 0x9c00e3508&gt;
-#&gt; &lt;environment: 0x9c0804938&gt;</code></pre>
-<p>Rare situations may arise where one wants to update the formula
-argument. This supported and implemented via the <code>update</code>
-method</p>
-<pre class="r"><code>lr_xgboost$update(y ~ age + sex)</code></pre>
-<p>The design matrix that results from by the specified formula can be
-inspected via</p>
-<pre class="r"><code>head(lr_xgboost$design(pbc)$x)
-#&gt;        age sexf
-#&gt; 1 58.76523    1
-#&gt; 2 56.44627    1
-#&gt; 3 70.07255    0
-#&gt; 4 54.74059    1
-#&gt; 5 38.10541    1
-#&gt; 6 66.25873    1</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>lr_xgboost<span class="sc">$</span><span class="fu">predict</span>(<span class="fu">head</span>(pbc))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.66811311 0.10537987 0.32460621 0.10537987 0.11731242 0.03387715</code></pre>
+</div>
+</div>
+<p>where the fitted model is used inside the learner object to generate the predictions.</p>
+<p>S3 methods are implemented for the <code>learner</code> class objects as an alternative to the R6 class syntax for fitting the model and making predictions.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> <span class="fu">learner_glm</span>(y <span class="sc">~</span> age, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">estimate</span>(lr, pbc)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">predict</span>(lr, <span class="fu">head</span>(pbc))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4          5          6 
+0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201 </code></pre>
+</div>
+</div>
+<h2 id="update-formula">Update formula</h2>
+<p>The estimate and predict functions of <code>learner</code> class objects are by design immutable. Both functions can be inspected as part of the return values of the summary method</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>lr_xgboost<span class="sc">$</span><span class="fu">summary</span>()<span class="sc">$</span>estimate</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (x, y, ...) 
+{
+    params &lt;- list(...)
+    par1 &lt;- intersect(formalArgs(xgboost::xgb.params), names(params))
+    xgb_params &lt;- params[par1]
+    xgb_train_args &lt;- params
+    xgb_train_args[par1] &lt;- NULL
+    d &lt;- xgboost::xgb.DMatrix(x, label = y)
+    res &lt;- do.call(xgboost::xgb.train, c(list(data = d), xgb_train_args, 
+        list(params = xgb_params)), )
+    return(res)
+}
+&lt;bytecode: 0x9164f8708&gt;
+&lt;environment: 0x913b66708&gt;</code></pre>
+</div>
+</div>
+<p>Rare situations may arise where one wants to update the formula argument. This supported and implemented via the <code>update</code> method</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>lr_xgboost<span class="sc">$</span><span class="fu">update</span>(y <span class="sc">~</span> age <span class="sc">+</span> sex)</span></code></pre></div>
+</div>
+<p>The design matrix that results from by the specified formula can be inspected via</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(lr_xgboost<span class="sc">$</span><span class="fu">design</span>(pbc)<span class="sc">$</span>x)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       age sexf
+1 58.76523    1
+2 56.44627    1
+3 70.07255    0
+4 54.74059    1
+5 38.10541    1
+6 66.25873    1</code></pre>
+</div>
+</div>
 <p>and the response vector via</p>
-<pre class="r"><code>head(lr_xgboost$response(pbc))
-#&gt; 1 2 3 4 5 6 
-#&gt; 1 0 0 0 0 0</code></pre>
-<p>See <code>?learner</code> for the differences between
-<code>learner$design</code> and <code>learner$response</code> and
-<code>?design</code> for more details about the construction of the
-design matrix and response vector.</p>
-</div>
-<div id="cross-validation" class="section level2">
-<h2>Cross-validation</h2>
-<p>The <code>{targeted}</code> package provides a generic implementation
-for repeated k-fold cross-validation with <code>learner</code> class
-objects. Parallelization is supported via the <code>{future}</code> and
-<code>{parallel}</code> packages (see <code>?cv</code> for more
-details).</p>
-<pre class="r"><code># future::plan(&quot;multicore&quot;)
-lrs &lt;- list(
-  glm = learner_glm(y ~ age + age, family = &quot;binomial&quot;),
-  gam = learner_gam(y ~ s(age) + s(bili), family = &quot;binomial&quot;)
-)
- # 2 times repeated 5-fold cross-validation
-cv(lrs, data = pbc, rep = 2, nfolds = 5)
-#&gt; Call: cv.default(object = lrs, data = pbc, nfolds = 5, rep = 2)
-#&gt; 
-#&gt; 5-fold cross-validation with 2 repetitions
-#&gt; 
-#&gt;            mse       mae
-#&gt; glm 0.10736745 0.2127521
-#&gt; gam 0.09894063 0.1888139</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(lr_xgboost<span class="sc">$</span><span class="fu">response</span>(pbc))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>1 2 3 4 5 6 
+1 0 0 0 0 0 </code></pre>
 </div>
 </div>
-<div id="defining-new-learners" class="section level1">
-<h1>Defining new learners</h1>
-<p>Statistical or machine learning models for which no constructors are
-provided can be implemented with a few lines of code. In what follows we
-cover three general cases where the input to the fit function
-differs.</p>
-<div id="fit-function-with-formula-and-data-arguments" class="section level2">
-<h2>Fit function with formula and data arguments</h2>
-<p>The first general case covers fit functions which expect a formula
-and data argument. Both arguments are used then by the fitting routine
-to construct the design matrix and response vector. Statistical models
-are usually implement with such an interface, with examples including
-<code>stats::glm</code>, <code>mgcv::gam</code> and
-<code>earth::earth</code>. The <code>learner</code> R6 class supports
-these fitting routines by checking if the provided estimate function has
-a <code>formula</code> and <code>data</code> argument. If it does, then
-the <code>formula</code> and <code>data</code> argument are passed on to
-the estimate function without further modifications. This is exemplified
-in the following for <code>stats::glm</code>, where we define a new
-constructor to return a <code>learner</code> class object that fits a
-generalized model</p>
-<pre class="r"><code>new_glm &lt;- function(formula, ...) {
-  learner$new(
-    formula = formula,
-    estimate = stats::glm,
-    predict = stats::predict,
-    predict.args = list(type = &quot;response&quot;),
-    estimate.args = list(...),
-    info = &quot;new glm learner&quot; # optional
-  )
-}
-lr &lt;- new_glm(y ~ age, family = &quot;binomial&quot;)
-lr
-#&gt; ────────── learner object ──────────
-#&gt; new glm learner 
-#&gt; 
-#&gt; Estimate arguments: family=binomial 
-#&gt; Predict arguments: type=response 
-#&gt; Formula: y ~ age</code></pre>
-<p>It can be seen that the optional arguments of <code>new_glm</code>
-define the <code>estimate.args</code> of a constructed learner object.
-When estimating the model with</p>
-<pre class="r"><code>lr$estimate(pbc)</code></pre>
-<p>the parameters defined in <code>estimate.args</code> are passed on
-with the <code>formula</code> and <code>data</code> to
-<code>stats::glm</code> (i.e. the function specified via the
-<code>estimate</code> argument). Thus, the above is equivalent to</p>
-<pre class="r"><code>fit &lt;- glm(y ~ age, family = &quot;binomial&quot;, data = pbc)
-all(coef(fit) == coef(lr$fit))
-#&gt; [1] TRUE</code></pre>
-<p>The code further instructs to construct a learner object that uses
-<code>stats::predict</code> to make predictions. The learner object
-similarly passes on the <code>predict.args</code> to
-<code>stats::predict</code> for</p>
-<pre class="r"><code>lr$predict(head(pbc))
-#&gt;          1          2          3          4          5          6 
-#&gt; 0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201</code></pre>
+<p>See <code>?learner</code> for the differences between <code>learner$design</code> and <code>learner$response</code> and <code>?design</code> for more details about the construction of the design matrix and response vector.</p>
+<h2 id="cross-validation">Cross-validation</h2>
+<p>The <code>{targeted}</code> package provides a generic implementation for repeated k-fold cross-validation with <code>learner</code> class objects. Parallelization is supported via the <code>{future}</code> and <code>{parallel}</code> packages (see <code>?cv</code> for more details).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># future::plan(&quot;multicore&quot;)</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>lrs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">glm =</span> <span class="fu">learner_glm</span>(y <span class="sc">~</span> age <span class="sc">+</span> age, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>),</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">gam =</span> <span class="fu">learner_gam</span>(y <span class="sc">~</span> <span class="fu">s</span>(age) <span class="sc">+</span> <span class="fu">s</span>(bili), <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a> <span class="co"># 2 times repeated 5-fold cross-validation</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="fu">cv</span>(lrs, <span class="at">data =</span> pbc, <span class="at">rep =</span> <span class="dv">2</span>, <span class="at">nfolds =</span> <span class="dv">5</span>)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Call: cv.default(object = lrs, data = pbc, nfolds = 5, rep = 2)
+
+5-fold cross-validation with 2 repetitions
+
+          mse       mae
+glm 0.1072236 0.2128743
+gam 0.1010563 0.1885859</code></pre>
+</div>
+</div>
+<h1 id="defining-new-learners">Defining new learners</h1>
+<p>Statistical or machine learning models for which no constructors are provided can be implemented with a few lines of code. In what follows we cover three general cases where the input to the fit function differs.</p>
+<h2 id="fit-function-with-formula-and-data-arguments">Fit function with formula and data arguments</h2>
+<p>The first general case covers fit functions which expect a formula and data argument. Both arguments are used then by the fitting routine to construct the design matrix and response vector. Statistical models are usually implement with such an interface, with examples including <code>stats::glm</code>, <code>mgcv::gam</code> and <code>earth::earth</code>. The <code>learner</code> R6 class supports these fitting routines by checking if the provided estimate function has a <code>formula</code> and <code>data</code> argument. If it does, then the <code>formula</code> and <code>data</code> argument are passed on to the estimate function without further modifications. This is exemplified in the following for <code>stats::glm</code>, where we define a new constructor to return a <code>learner</code> class object that fits a generalized model</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>new_glm <span class="ot">&lt;-</span> <span class="cf">function</span>(formula, ...) {</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  learner<span class="sc">$</span><span class="fu">new</span>(</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span> formula,</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> stats<span class="sc">::</span>glm,</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">predict =</span> stats<span class="sc">::</span>predict,</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">predict.args =</span> <span class="fu">list</span>(<span class="at">type =</span> <span class="st">&quot;response&quot;</span>),</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate.args =</span> <span class="fu">list</span>(...),</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">info =</span> <span class="st">&quot;new glm learner&quot;</span> <span class="co"># optional</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> <span class="fu">new_glm</span>(y <span class="sc">~</span> age, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>lr</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>────────── learner object ──────────
+new glm learner 
+
+Estimate arguments: family=binomial 
+Predict arguments: type=response 
+Formula: y ~ age </code></pre>
+</div>
+</div>
+<p>It can be seen that the optional arguments of <code>new_glm</code> define the <code>estimate.args</code> of a constructed learner object. When estimating the model with</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(pbc)</span></code></pre></div>
+</div>
+<p>the parameters defined in <code>estimate.args</code> are passed on with the <code>formula</code> and <code>data</code> to <code>stats::glm</code> (i.e. the function specified via the <code>estimate</code> argument). Thus, the above is equivalent to</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glm</span>(y <span class="sc">~</span> age, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>, <span class="at">data =</span> pbc)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">coef</span>(fit) <span class="sc">==</span> <span class="fu">coef</span>(lr<span class="sc">$</span>fit))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE</code></pre>
+</div>
+</div>
+<p>The code further instructs to construct a learner object that uses <code>stats::predict</code> to make predictions. The learner object similarly passes on the <code>predict.args</code> to <code>stats::predict</code> for</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">predict</span>(<span class="fu">head</span>(pbc))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4          5          6 
+0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201 </code></pre>
+</div>
+</div>
 <p>which is equivalent to</p>
-<pre class="r"><code>predict(fit, newdata = head(pbc), type = &quot;response&quot;)
-#&gt;          1          2          3          4          5          6 
-#&gt; 0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201</code></pre>
-<p>Indeed, the documentation of <code>?learner</code> reveals that the
-predict method always requires an <code>object</code> and
-<code>newdata</code> argument. An important implementation detail is
-that the <code>learner</code> R6 class allows to overrule the defined
-<code>estimate.args</code> and <code>predict.args</code> in the method
-calls.</p>
-<pre class="r"><code>lr$estimate(pbc, family = &quot;poisson&quot;)
-lr$predict(head(pbc), type = &quot;link&quot;)
-#&gt;         1         2         3         4         5         6 
-#&gt; -1.837279 -1.939001 -1.341276 -2.013822 -2.743535 -1.508572</code></pre>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="fu">predict</span>(fit, <span class="at">newdata =</span> <span class="fu">head</span>(pbc), <span class="at">type =</span> <span class="st">&quot;response&quot;</span>)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>         1          2          3          4          5          6 
+0.16171479 0.14624529 0.25614862 0.13566571 0.06272415 0.22071201 </code></pre>
 </div>
-<div id="fit-function-with-x-and-y-arguments" class="section level2">
-<h2>Fit function with x and y arguments</h2>
-<p>Most fitting routines for machine learning models expect a design
-matrix and response vector as inputs. The R6 <code>learner</code> class
-supports these fitting functions by internally processing the
-<code>formula</code> argument via the <code>targeted::design</code>
-function. Take the example of <code>grf::probability_forest</code>,
-which expects a <code>X</code> (design matrix) and <code>Y</code>
-(response vector) as inputs.</p>
-<pre class="r"><code>new_grf &lt;- function(formula, ...) {
-  learner$new(
-    formula = formula,
-    estimate = function(x, y, ...) grf::probability_forest(X = x, Y = y, ...),
-    predict = function(object, newdata) {
-      predict(object, newdata = newdata)$predictions
-    },
-    estimate.args = list(...),
-    info = &quot;grf::probability_forest&quot;
-  )
-}
-lr &lt;- new_grf(as.factor(y) ~ age + bili, num.trees = 100)
-lr$estimate(pbc)</code></pre>
-<p>Compared to the previous case, the <code>pbc</code> data object is
-not directly passed on to the fit function.
-Instead,<code>targeted::design</code> constructs the design matrix and
-response vector from the defined <code>formula</code> argument. As shown
-previously,</p>
-<pre class="r"><code>dsgn &lt;- lr$design(pbc)</code></pre>
-<p>can be used to inspect the design object. The <code>x</code> and
-<code>y</code> attributes of the returned <code>design</code> object are
-then passed on to the fit function.</p>
 </div>
-<div id="fit-function-with-single-data-argument" class="section level2">
-<h2>Fit function with single data argument</h2>
-<p>To support ensemble/meta learners, it is also possible to construct a
-learner without providing a formula argument.</p>
-<pre class="r"><code>new_sl &lt;- function(learners, ...) {
-  learner$new(
-    info = &quot;new superlearner&quot;,
-    estimate = superlearner,
-    predict = targeted:::predict.superlearner,
-    estimate.args = c(list(learners = learners), list(...))
-  )
-}
-lrs &lt;- list(
-  glm = learner_glm(y ~ age, family = &quot;binomial&quot;),
-  gam = learner_gam(y ~ s(age), family = &quot;binomial&quot;)
-)
-lr &lt;- new_sl(lrs, nfolds = 2)
-lr$estimate(pbc)
-lr
-#&gt; ────────── learner object ──────────
-#&gt; new superlearner 
-#&gt; 
-#&gt; Estimate arguments: learners=&lt;list&gt;, nfolds=2 
-#&gt; Predict arguments:   
-#&gt; Formula: NULL 
-#&gt; ─────────────────────────────────────
-#&gt;         score    weight
-#&gt; glm 0.1081636 0.6177615
-#&gt; gam 0.1082369 0.3822385</code></pre>
-<p>In this case, all arguments provided to <code>lr$estimate</code> are
-joined together with the specified <code>estimate.args</code> and passed
-on to the defined estimate function (i.e.
-<code>superlearner</code>).</p>
+<p>Indeed, the documentation of <code>?learner</code> reveals that the predict method always requires an <code>object</code> and <code>newdata</code> argument. An important implementation detail is that the <code>learner</code> R6 class allows to overrule the defined <code>estimate.args</code> and <code>predict.args</code> in the method calls.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(pbc, <span class="at">family =</span> <span class="st">&quot;poisson&quot;</span>)</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">predict</span>(<span class="fu">head</span>(pbc), <span class="at">type =</span> <span class="st">&quot;link&quot;</span>)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>        1         2         3         4         5         6 
+-1.837279 -1.939001 -1.341276 -2.013822 -2.743535 -1.508572 </code></pre>
 </div>
-<div id="specials-in-formula" class="section level2">
-<h2>Specials in formula</h2>
-<p>Certain learner functions allow for specifying special terms in the
-formula. For example, let’s consider an aggregated dataset that includes
-only the response variable, treatment, and sex:</p>
-<pre class="r"><code>library(&quot;data.table&quot;)
-dd &lt;- data.table(pbc)[!is.na(trt), .(.N), by=.(y,trt,sex)]
-print(dd)
-#&gt;        y   trt    sex     N
-#&gt;    &lt;int&gt; &lt;int&gt; &lt;fctr&gt; &lt;int&gt;
-#&gt; 1:     1     1      f    13
-#&gt; 2:     0     1      f   124
-#&gt; 3:     0     1      m    19
-#&gt; 4:     0     2      f   123
-#&gt; 5:     1     2      f    16
-#&gt; 6:     0     2      m    12
-#&gt; 7:     1     2      m     3
-#&gt; 8:     1     1      m     2</code></pre>
-<p>Next, we fit a Naive Bayes classifier using the <code>weights</code>
-special term to specify the frequency weights for the estimation</p>
-<pre class="r"><code>lr &lt;- learner_naivebayes(y ~ trt + sex + weights(N))
-lr$estimate(dd)
-lr$predict(dd)
-#&gt; [1] 0.09138473 0.09138473 0.12139346 0.11913520 0.11913520 0.15668515 0.15668515
-#&gt; [8] 0.12139346</code></pre>
+</div>
+<h2 id="fit-function-with-x-and-y-arguments">Fit function with x and y arguments</h2>
+<p>Most fitting routines for machine learning models expect a design matrix and response vector as inputs. The R6 <code>learner</code> class supports these fitting functions by internally processing the <code>formula</code> argument via the <code>targeted::design</code> function. Take the example of <code>grf::probability_forest</code>, which expects a <code>X</code> (design matrix) and <code>Y</code> (response vector) as inputs.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>new_grf <span class="ot">&lt;-</span> <span class="cf">function</span>(formula, ...) {</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>  learner<span class="sc">$</span><span class="fu">new</span>(</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">formula =</span> formula,</span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> <span class="cf">function</span>(x, y, ...) grf<span class="sc">::</span><span class="fu">probability_forest</span>(<span class="at">X =</span> x, <span class="at">Y =</span> y, ...),</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">predict =</span> <span class="cf">function</span>(object, newdata) {</span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">predict</span>(object, <span class="at">newdata =</span> newdata)<span class="sc">$</span>predictions</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>    },</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate.args =</span> <span class="fu">list</span>(...),</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">info =</span> <span class="st">&quot;grf::probability_forest&quot;</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> <span class="fu">new_grf</span>(<span class="fu">as.factor</span>(y) <span class="sc">~</span> age <span class="sc">+</span> bili, <span class="at">num.trees =</span> <span class="dv">100</span>)</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(pbc)</span></code></pre></div>
+</div>
+<p>Compared to the previous case, the <code>pbc</code> data object is not directly passed on to the fit function. Instead,<code>targeted::design</code> constructs the design matrix and response vector from the defined <code>formula</code> argument. As shown previously,</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a>dsgn <span class="ot">&lt;-</span> lr<span class="sc">$</span><span class="fu">design</span>(pbc)</span></code></pre></div>
+</div>
+<p>can be used to inspect the design object. The <code>x</code> and <code>y</code> attributes of the returned <code>design</code> object are then passed on to the fit function.</p>
+<h2 id="fit-function-with-single-data-argument">Fit function with single data argument</h2>
+<p>To support ensemble/meta learners, it is also possible to construct a learner without providing a formula argument.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>new_sl <span class="ot">&lt;-</span> <span class="cf">function</span>(learners, ...) {</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  learner<span class="sc">$</span><span class="fu">new</span>(</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">info =</span> <span class="st">&quot;new superlearner&quot;</span>,</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate =</span> superlearner,</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">predict =</span> targeted<span class="sc">:::</span>predict.superlearner,</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">estimate.args =</span> <span class="fu">c</span>(<span class="fu">list</span>(<span class="at">learners =</span> learners), <span class="fu">list</span>(...))</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>lrs <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">glm =</span> <span class="fu">learner_glm</span>(y <span class="sc">~</span> age, <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>),</span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">gam =</span> <span class="fu">learner_gam</span>(y <span class="sc">~</span> <span class="fu">s</span>(age), <span class="at">family =</span> <span class="st">&quot;binomial&quot;</span>)</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> <span class="fu">new_sl</span>(lrs, <span class="at">nfolds =</span> <span class="dv">2</span>)</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(pbc)</span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>lr</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>────────── learner object ──────────
+new superlearner 
+
+Estimate arguments: learners=&lt;list&gt;, nfolds=2 
+Predict arguments:   
+Formula: NULL 
+─────────────────────────────────────
+        score    weight
+glm 0.1067067 0.6825316
+gam 0.1067525 0.3174684</code></pre>
+</div>
+</div>
+<p>In this case, all arguments provided to <code>lr$estimate</code> are joined together with the specified <code>estimate.args</code> and passed on to the defined estimate function (i.e. <code>superlearner</code>).</p>
+<h2 id="specials-in-formula">Specials in formula</h2>
+<p>Certain learner functions allow for specifying special terms in the formula. For example, let’s consider an aggregated dataset that includes only the response variable, treatment, and sex:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(<span class="st">&quot;data.table&quot;</span>)</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>dd <span class="ot">&lt;-</span> <span class="fu">data.table</span>(pbc)[<span class="sc">!</span><span class="fu">is.na</span>(trt), .(.N), by<span class="ot">=</span>.(y,trt,sex)]</span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(dd)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       y   trt    sex     N
+   &lt;int&gt; &lt;int&gt; &lt;fctr&gt; &lt;int&gt;
+1:     1     1      f    13
+2:     0     1      f   124
+3:     0     1      m    19
+4:     0     2      f   123
+5:     1     2      f    16
+6:     0     2      m    12
+7:     1     2      m     3
+8:     1     1      m     2</code></pre>
+</div>
+</div>
+<p>Next, we fit a Naive Bayes classifier using the <code>weights</code> special term to specify the frequency weights for the estimation</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> <span class="fu">learner_naivebayes</span>(y <span class="sc">~</span> trt <span class="sc">+</span> sex <span class="sc">+</span> <span class="fu">weights</span>(N))</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(dd)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">predict</span>(dd)</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.09138473 0.09138473 0.12139346 0.11913520 0.11913520 0.15668515 0.15668515
+[8] 0.12139346</code></pre>
+</div>
+</div>
 <p>Here <code>weights.numeric</code> is simply the identity function</p>
-<pre class="r"><code>targeted:::weights.numeric
-#&gt; function (object, ...) 
-#&gt; object
-#&gt; &lt;bytecode: 0x9c1e5d380&gt;
-#&gt; &lt;environment: namespace:targeted&gt;</code></pre>
-<p>To illustrate how to define a custom learner that utilizes special
-terms, consider the following example where we introduce a
-<code>strata</code> term. In this case, we introduce an estimation
-method that fits a linear regression model for each value of the strata
-variable, as well as a corresponding prediction method</p>
-<pre class="r"><code>est &lt;- function(formula, data, strata, ...)
-  lapply(levels(strata), \(s) lm(formula, data[which(strata==s),]))
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>targeted<span class="sc">:::</span>weights.numeric</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>function (object, ...) 
+object
+&lt;bytecode: 0x915b0f3b8&gt;
+&lt;environment: namespace:targeted&gt;</code></pre>
+</div>
+</div>
+<p>To illustrate how to define a custom learner that utilizes special terms, consider the following example where we introduce a <code>strata</code> term. In this case, we introduce an estimation method that fits a linear regression model for each value of the strata variable, as well as a corresponding prediction method</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>est <span class="ot">&lt;-</span> <span class="cf">function</span>(formula, data, strata, ...)</span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="fu">levels</span>(strata), \(s) <span class="fu">lm</span>(formula, data[<span class="fu">which</span>(strata<span class="sc">==</span>s),]))</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="cf">function</span>(object, newdata, strata, ...) {</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">numeric</span>(<span class="fu">length</span>(strata))</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(<span class="fu">levels</span>(strata))) {</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a>    idx <span class="ot">&lt;-</span> <span class="fu">which</span>(strata <span class="sc">==</span> <span class="fu">levels</span>(strata)[i])</span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a>    res[idx] <span class="ot">&lt;-</span> <span class="fu">predict</span>(object[[i]], newdata[idx, ], ...)</span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(res)</span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+</div>
+<p>The new learner is now defined by including the argument `specials = “strata”, which ensures that the strata variable is correctly passed to both the estimate and predict functions</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a>lr <span class="ot">&lt;-</span> learner<span class="sc">$</span><span class="fu">new</span>(y <span class="sc">~</span> sex <span class="sc">+</span> <span class="fu">strata</span>(trt),</span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>                  <span class="at">estimate=</span>est, <span class="at">predict=</span>pred, <span class="at">specials =</span> <span class="st">&quot;strata&quot;</span>)</span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>des <span class="ot">&lt;-</span> lr<span class="sc">$</span><span class="fu">design</span>(<span class="fu">head</span>(pbc))</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a>des</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>────────── design object ──────────
 
-pred &lt;- function(object, newdata, strata, ...) {
-  res &lt;- numeric(length(strata))
-  for (i in seq_along(levels(strata))) {
-    idx &lt;- which(strata == levels(strata)[i])
-    res[idx] &lt;- predict(object[[i]], newdata[idx, ], ...)
-  }
-  return(res)
-}</code></pre>
-<p>The new learner is now defined by including the argument `specials =
-“strata”, which ensures that the strata variable is correctly passed to
-both the estimate and predict functions</p>
-<pre class="r"><code>lr &lt;- learner$new(y ~ sex + strata(trt),
-                  estimate=est, predict=pred, specials = &quot;strata&quot;)
-des &lt;- lr$design(head(pbc))
-des
-#&gt; ────────── design object ──────────
-#&gt; 
-#&gt; response (length: 6)     
-#&gt; 1   1
-#&gt; 2   0
-#&gt; ---  
-#&gt; 5   0
-#&gt; 6   0
-#&gt; 
-#&gt; specials
-#&gt;  - strata [factor]
-#&gt; 
-#&gt; design matrix (dim: 6, 1)
-#&gt;     sexf
-#&gt; 1   1   
-#&gt; 2   1   
-#&gt; ---     
-#&gt; 5   1   
-#&gt; 6   1
-des$strata
-#&gt;     1     2     3     4     5     6 
-#&gt; trt=1 trt=1 trt=1 trt=1 trt=2 trt=2 
-#&gt; Levels: trt=1 trt=2</code></pre>
-<pre class="r"><code>lr$estimate(pbc)
-lr
-#&gt; ────────── learner object ──────────
-#&gt; Estimate arguments:   
-#&gt; Predict arguments:   
-#&gt; Formula: y ~ sex + strata(trt) 
-#&gt; ─────────────────────────────────────
-#&gt; [[1]]
-#&gt; 
-#&gt; Call:
-#&gt; lm(formula = formula, data = data[which(strata == s), ])
-#&gt; 
-#&gt; Coefficients:
-#&gt; (Intercept)         sexf  
-#&gt;   0.0952381   -0.0003476  
-#&gt; 
-#&gt; 
-#&gt; [[2]]
-#&gt; 
-#&gt; Call:
-#&gt; lm(formula = formula, data = data[which(strata == s), ])
-#&gt; 
-#&gt; Coefficients:
-#&gt; (Intercept)         sexf  
-#&gt;     0.20000     -0.08489
-lr$predict(head(pbc))
-#&gt; [1] 0.09489051 0.09489051 0.09523810 0.09489051 0.11510791 0.11510791</code></pre>
+response (length: 6)
+     
+1   1
+2   0
+---  
+5   0
+6   0
+
+specials
+ - strata [factor]
+
+design matrix (dim: 6, 1)
+    sexf
+1   1   
+2   1   
+---     
+5   1   
+6   1   </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb52"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb52-1"><a href="#cb52-1" aria-hidden="true" tabindex="-1"></a>des<span class="sc">$</span>strata</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    1     2     3     4     5     6 
+trt=1 trt=1 trt=1 trt=1 trt=2 trt=2 
+Levels: trt=1 trt=2</code></pre>
+</div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb54"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb54-1"><a href="#cb54-1" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">estimate</span>(pbc)</span>
+<span id="cb54-2"><a href="#cb54-2" aria-hidden="true" tabindex="-1"></a>lr</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>────────── learner object ──────────
+Estimate arguments:   
+Predict arguments:   
+Formula: y ~ sex + strata(trt) 
+─────────────────────────────────────
+[[1]]
+
+Call:
+lm(formula = formula, data = data[which(strata == s), ])
+
+Coefficients:
+(Intercept)         sexf  
+  0.0952381   -0.0003476  
+
+
+[[2]]
+
+Call:
+lm(formula = formula, data = data[which(strata == s), ])
+
+Coefficients:
+(Intercept)         sexf  
+    0.20000     -0.08489  </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb56"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb56-1"><a href="#cb56-1" aria-hidden="true" tabindex="-1"></a>lr<span class="sc">$</span><span class="fu">predict</span>(<span class="fu">head</span>(pbc))</span></code></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.09489051 0.09489051 0.09523810 0.09489051 0.11510791 0.11510791</code></pre>
 </div>
 </div>
 
 
 
-<!-- code folding -->
 
 
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
-
-</body>
-</html>
+</body></html>
